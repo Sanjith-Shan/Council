@@ -68,12 +68,12 @@
 - [x] Git commit: "feat: route chat through OpenClaw gateway"
 
 ## Task 4: Add OPENCLAW_GATEWAY_TOKEN to .env
-- [ ] Read the current gateway token: run `openclaw config get gateway.auth.token`
-- [ ] Add to .env file: `OPENCLAW_GATEWAY_TOKEN=<the token value>`
-- [ ] Make sure .env is in .gitignore (it should already be)
-- [ ] Add to .env.example: `OPENCLAW_GATEWAY_TOKEN=your-openclaw-gateway-token`
-- [ ] Test: restart server, verify "✓ Connected to OpenClaw gateway" appears
-- [ ] Git commit: "feat: configure gateway token"
+- [x] Read the current gateway token: run `openclaw config get gateway.auth.token`
+- [x] Add to .env file: `OPENCLAW_GATEWAY_TOKEN=<the token value>`
+- [x] Make sure .env is in .gitignore (it should already be)
+- [x] Add to .env.example: `OPENCLAW_GATEWAY_TOKEN=your-openclaw-gateway-token`
+- [x] Test: restart server, verify "✓ Connected to OpenClaw gateway" appears
+- [x] Git commit: "feat: configure gateway token"
 
 ## Task 5: Show connection status in the UI
 - [ ] In static/index.html, add a connection indicator to the top bar:
