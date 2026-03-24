@@ -42,6 +42,8 @@ audit_log = AuditLog(db=db)
 risk_profile = db.load_risk_profile() or RiskProfile()  # Default conservative
 user_goal = db.get_user_setting("user_goal", "Grow my online business and increase customer engagement")
 user_name = db.get_user_setting("user_name", "there")
+council_enabled = db.get_user_setting("council_enabled", True)
+council_model = db.get_user_setting("council_model", "gpt-4o-mini")
 chat_history: list[dict] = []  # OpenAI message format
 
 
@@ -154,6 +156,8 @@ class GoalUpdate(BaseModel):
 class SettingsUpdate(BaseModel):
     user_goal: str | None = None
     user_name: str | None = None
+    council_enabled: bool | None = None
+    council_model: str | None = None
 
 class EvaluateRequest(BaseModel):
     """Incoming tool call from OpenClaw/ClawBands for council evaluation."""
@@ -225,13 +229,18 @@ async def get_goal():
 @app.get("/api/settings")
 async def get_settings():
     """Return persisted user settings for UI consumption."""
-    return {"user_goal": user_goal, "user_name": user_name}
+    return {
+        "user_goal": user_goal,
+        "user_name": user_name,
+        "council_enabled": council_enabled,
+        "council_model": council_model,
+    }
 
 
 @app.post("/api/settings")
 async def update_settings(req: SettingsUpdate):
-    """Update user settings (goal/name) with SQLite persistence."""
-    global user_goal, user_name
+    """Update user settings (goal/name/config) with SQLite persistence."""
+    global user_goal, user_name, council_enabled, council_model
 
     if req.user_goal is not None:
         user_goal = req.user_goal
@@ -241,7 +250,20 @@ async def update_settings(req: SettingsUpdate):
         user_name = req.user_name
         db.set_user_setting("user_name", user_name)
 
-    return {"user_goal": user_goal, "user_name": user_name}
+    if req.council_enabled is not None:
+        council_enabled = req.council_enabled
+        db.set_user_setting("council_enabled", council_enabled)
+
+    if req.council_model is not None:
+        council_model = req.council_model
+        db.set_user_setting("council_model", council_model)
+
+    return {
+        "user_goal": user_goal,
+        "user_name": user_name,
+        "council_enabled": council_enabled,
+        "council_model": council_model,
+    }
 
 
 @app.post("/api/chat")
@@ -314,6 +336,13 @@ async def _process_action(action: ProposedAction):
 
     # Step 1: Pre-filter check
     pre_tier = tier_classifier.pre_filter(action)
+
+    if not council_enabled:
+        evaluated = tier_classifier.classify(action, None, risk_profile)
+        if evaluated.status == ActionStatus.EXECUTED:
+            evaluated.execution_result = simulate_tool_execution(action)
+        audit_log.log_action(evaluated)
+        return evaluated
 
     if pre_tier == Tier.AUTO:
         # Trivially safe — skip council

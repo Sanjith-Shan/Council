@@ -139,16 +139,16 @@
 
 ## PHASE 3: Settings + Advanced Features (Tasks 11-14)
 
-### Task 11: Settings page
-- [ ] Slide-up modal from gear icon
-- [ ] Sections:
+### Task 11: Settings page — completed 2026-03-24T11:05:04Z by cron
+- [x] Slide-up modal from gear icon
+- [x] Sections:
   - "Risk Profile" — shows current answers, tap to re-take questionnaire
   - "Your Goal" — editable text field with save button
   - "Audit Trail" — full searchable log of all actions (paginated, filterable by tier)
   - "Council Config" — toggle council on/off, select model (gpt-4o-mini default)
   - "About" — version, link to GitHub repo
-- [ ] All settings persist via SQLite
-- [ ] Git commit: "feat: settings page"
+- [x] All settings persist via SQLite
+- [x] Git commit: "feat: settings page"
 
 ### Task 12: Onboarding flow for new users
 - [ ] On first visit (no risk profile in database), show a fullscreen onboarding flow

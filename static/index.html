@@ -152,6 +152,18 @@ button, input { font-family: inherit; }
 .modal-handle { width: 42px; height: 4px; border-radius: 999px; background: #3a3a3a; margin: 2px auto 12px; }
 .modal h2 { font-size: 18px; margin-bottom: 10px; }
 .close-btn { float: right; border: none; background: transparent; color: var(--text-muted); font-size: 22px; line-height: 1; padding: 2px 6px; cursor: pointer; }
+.settings-section { background: #171717; border: 1px solid #2a2a2a; border-radius: 12px; padding: 12px; margin-bottom: 10px; }
+.settings-section h3 { font-size: 14px; margin-bottom: 8px; }
+.settings-row { display: grid; gap: 8px; margin-bottom: 8px; }
+.settings-input, .settings-select { width: 100%; min-height: 42px; border-radius: 8px; border: 1px solid #333; background: #111; color: var(--text); padding: 10px; font-size: 14px; }
+.settings-switch { display: flex; align-items: center; justify-content: space-between; gap: 10px; font-size: 13px; color: var(--text); margin-bottom: 8px; }
+.settings-switch input { width: 18px; height: 18px; accent-color: var(--accent); }
+.audit-controls { display: grid; grid-template-columns: 1fr auto; gap: 8px; margin-bottom: 8px; }
+.audit-list { display: grid; gap: 8px; max-height: 240px; overflow: auto; }
+.audit-item { border: 1px solid #2c2c2c; border-radius: 10px; padding: 9px; background: #121212; }
+.audit-item .meta { margin-bottom: 4px; }
+.audit-pagination { display: flex; justify-content: space-between; align-items: center; margin-top: 8px; }
+.mini-btn { min-height: 36px; border-radius: 8px; border: 1px solid #333; background: #1e1e1e; color: var(--text); padding: 0 10px; }
 .q-group { margin-bottom: 14px; }
 .q-group label { display: block; font-size: 13px; margin-bottom: 6px; }
 .option { display: flex; gap: 8px; align-items: center; padding: 8px; border-radius: 10px; background: #161616; margin-bottom: 6px; }
@@ -183,7 +195,7 @@ button, input { font-family: inherit; }
     <button class="tab" data-tab="insights" onclick="switchTab('insights')"><svg viewBox="0 0 24 24"><path d="M4 19h16"></path><path d="M7 15V9"></path><path d="M12 15V5"></path><path d="M17 15v-3"></path></svg><span>Insights</span></button>
   </nav>
 </div>
-<div class="modal-overlay" id="settings-modal" onclick="if(event.target===this)closeSettings()"><div class="modal" role="dialog" aria-label="Settings"><div class="modal-handle"></div><button class="close-btn" onclick="closeSettings()">×</button><h2>Risk Profile Settings</h2><div id="settings-questions"></div><button class="save-btn" onclick="saveProfile()">Save Profile</button></div></div>
+<div class="modal-overlay" id="settings-modal" onclick="if(event.target===this)closeSettings()"><div class="modal" role="dialog" aria-label="Settings"><div class="modal-handle"></div><button class="close-btn" onclick="closeSettings()">×</button><h2>Settings</h2><section class="settings-section"><h3>Risk Profile</h3><div id="settings-questions"></div><button class="save-btn" onclick="saveProfile()">Re-take questionnaire</button></section><section class="settings-section"><h3>Your Goal</h3><div class="settings-row"><input id="settings-name" class="settings-input" placeholder="Your name"><input id="settings-goal" class="settings-input" placeholder="Your goal"></div><button class="save-btn" onclick="saveGoalSettings()">Save goal</button></section><section class="settings-section"><h3>Audit Trail</h3><div class="audit-controls"><input id="audit-search" class="settings-input" placeholder="Search actions" oninput="renderAuditTrail()"><select id="audit-tier" class="settings-select" onchange="renderAuditTrail()"><option value="all">All tiers</option><option value="tier1_auto">Tier 1</option><option value="tier2_notify">Tier 2</option><option value="tier3_approve">Tier 3</option><option value="tier4_blocked">Tier 4</option></select></div><div id="audit-list" class="audit-list"></div><div class="audit-pagination"><button class="mini-btn" onclick="changeAuditPage(-1)">Prev</button><span id="audit-page" class="muted">Page 1</span><button class="mini-btn" onclick="changeAuditPage(1)">Next</button></div></section><section class="settings-section"><h3>Council Config</h3><label class="settings-switch"><span>Council enabled</span><input type="checkbox" id="cfg-enabled"></label><label class="settings-row"><span class="muted">Model</span><select id="cfg-model" class="settings-select"><option value="gpt-4o-mini">gpt-4o-mini</option><option value="gpt-4.1-mini">gpt-4.1-mini</option><option value="gpt-4o">gpt-4o</option></select></label><button class="save-btn" onclick="saveCouncilConfig()">Save config</button></section><section class="settings-section"><h3>About</h3><p class="muted">Council v0.1 · AI action review framework.</p><p><a href="https://github.com" target="_blank" rel="noopener" style="color:var(--accent)">GitHub repository</a></p></section></div></div>
 <script>
 if ('serviceWorker' in navigator) { window.addEventListener('load', () => navigator.serviceWorker.register('/static/sw.js').catch(() => {})); }
 function switchTab(tab) { document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === tab)); document.querySelectorAll('.panel').forEach(p => p.classList.toggle('active', p.id === `panel-${tab}`)); if (tab === 'approvals') loadApprovals(); if (tab === 'activity') loadActivity(); if (tab === 'insights') loadInsights(); }
@@ -355,9 +367,90 @@ function buildSuggestions(events, stats) {
   return suggestions;
 }
 let settingsQuestions = [];
-async function openSettings() { const res = await fetch('/api/onboarding'); const data = await res.json(); settingsQuestions = data.questions || []; const current = data.current_profile || {}; document.getElementById('settings-questions').innerHTML = settingsQuestions.map(q => `<div class="q-group"><label>${escapeHtml(q.question)}</label>${q.options.map(o => `<label class="option"><input type="radio" name="${q.id}" value="${o.value}" ${current[q.id] === o.value ? 'checked' : ''}>${escapeHtml(o.label)}</label>`).join('')}</div>`).join(''); document.getElementById('settings-modal').classList.add('show'); }
+let auditActions = [];
+let auditPage = 1;
+const auditPageSize = 6;
+
+async function openSettings() {
+  const [onboardingRes, settingsRes, actionsRes] = await Promise.all([
+    fetch('/api/onboarding'),
+    fetch('/api/settings'),
+    fetch('/api/actions')
+  ]);
+  const onboarding = await onboardingRes.json();
+  const settings = await settingsRes.json();
+  const actions = await actionsRes.json();
+
+  settingsQuestions = onboarding.questions || [];
+  const current = onboarding.current_profile || {};
+  document.getElementById('settings-questions').innerHTML = settingsQuestions.map(q => `<div class="q-group"><label>${escapeHtml(q.question)}</label>${q.options.map(o => `<label class="option"><input type="radio" name="${q.id}" value="${o.value}" ${current[q.id] === o.value ? 'checked' : ''}>${escapeHtml(o.label)}</label>`).join('')}</div>`).join('');
+
+  document.getElementById('settings-name').value = settings.user_name || '';
+  document.getElementById('settings-goal').value = settings.user_goal || '';
+  document.getElementById('cfg-enabled').checked = settings.council_enabled !== false;
+  document.getElementById('cfg-model').value = settings.council_model || 'gpt-4o-mini';
+
+  auditActions = actions.actions || [];
+  auditPage = 1;
+  renderAuditTrail();
+
+  document.getElementById('settings-modal').classList.add('show');
+}
 function closeSettings() { document.getElementById('settings-modal').classList.remove('show'); }
-async function saveProfile() { const answers = {}; for (const q of settingsQuestions) { const checked = document.querySelector(`input[name="${q.id}"]:checked`); if (checked) answers[q.id] = checked.value; } await fetch('/api/profile', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ answers }) }); closeSettings(); addChatMsg('system', '✓ Risk profile updated'); }
+
+function renderAuditTrail() {
+  const query = (document.getElementById('audit-search').value || '').toLowerCase().trim();
+  const tier = document.getElementById('audit-tier').value;
+  const filtered = (auditActions || []).filter(a => {
+    const tierOk = tier === 'all' || a.tier === tier;
+    const text = `${a.description || ''} ${a.tool_name || ''} ${a.status || ''}`.toLowerCase();
+    const queryOk = !query || text.includes(query);
+    return tierOk && queryOk;
+  });
+
+  const totalPages = Math.max(1, Math.ceil(filtered.length / auditPageSize));
+  if (auditPage > totalPages) auditPage = totalPages;
+  const start = (auditPage - 1) * auditPageSize;
+  const pageItems = filtered.slice(start, start + auditPageSize);
+
+  const list = document.getElementById('audit-list');
+  if (!pageItems.length) {
+    list.innerHTML = '<p class="muted">No actions match this filter.</p>';
+  } else {
+    list.innerHTML = pageItems.map(a => `<div class="audit-item"><div><strong>${escapeHtml(a.description || 'Action')}</strong></div><div class="meta">${escapeHtml(a.tool_name || 'unknown')} · ${escapeHtml(a.tier || '')} · ${new Date(a.timestamp).toLocaleString()}</div><div class="muted">Status: ${escapeHtml(a.status || 'unknown')}</div></div>`).join('');
+  }
+  document.getElementById('audit-page').textContent = `Page ${auditPage} / ${totalPages}`;
+}
+
+function changeAuditPage(delta) {
+  auditPage = Math.max(1, auditPage + delta);
+  renderAuditTrail();
+}
+
+async function saveProfile() {
+  const answers = {};
+  for (const q of settingsQuestions) {
+    const checked = document.querySelector(`input[name="${q.id}"]:checked`);
+    if (checked) answers[q.id] = checked.value;
+  }
+  await fetch('/api/profile', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ answers }) });
+  addChatMsg('system', '✓ Risk profile updated');
+}
+
+async function saveGoalSettings() {
+  const user_name = document.getElementById('settings-name').value.trim();
+  const user_goal = document.getElementById('settings-goal').value.trim();
+  await fetch('/api/settings', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ user_name, user_goal }) });
+  addChatMsg('system', '✓ Goal settings saved');
+  loadInsights();
+}
+
+async function saveCouncilConfig() {
+  const council_enabled = document.getElementById('cfg-enabled').checked;
+  const council_model = document.getElementById('cfg-model').value;
+  await fetch('/api/settings', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ council_enabled, council_model }) });
+  addChatMsg('system', '✓ Council configuration saved');
+}
 function escapeHtml(s) { return (s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 function getTierClass(t) { if (t === 'tier1_auto') return 'auto'; if (t === 'tier2_notify') return 'notify'; if (t === 'tier3_approve') return 'approve'; if (t === 'tier4_blocked') return 'blocked'; return ''; }
 function getTierLabel(t) { if (t === 'tier1_auto') return 'Auto-executed'; if (t === 'tier2_notify') return 'Executed'; if (t === 'tier3_approve') return 'Needs approval'; if (t === 'tier4_blocked') return 'Blocked'; return t; }
