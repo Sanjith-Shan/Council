@@ -62,47 +62,47 @@
 - [x] Test: open in Safari on phone, "Add to Home Screen" should work and app should open standalone
 - [x] Git commit: "feat: PWA setup for mobile home screen"
 
-### Task 6: Redesign — Bottom navigation bar + layout shell
-- [ ] Complete UI rewrite of static/index.html
-- [ ] Design system: dark theme, clean modern look, system font stack
-- [ ] Bottom navigation bar (fixed, 4 tabs): Chat, Approvals, Activity, Insights
-- [ ] Each tab has an icon (use simple SVG icons, no external libraries)
-- [ ] Active tab highlighted with accent color
-- [ ] Badge count on Approvals tab for pending items
-- [ ] Top bar: "Council" title + settings gear icon
-- [ ] Settings opens as a slide-up modal/sheet
-- [ ] Everything must be mobile-responsive (max-width: 100vw, no horizontal scroll)
-- [ ] Safe area padding for iPhone notch (env(safe-area-inset-top))
-- [ ] Git commit: "feat: mobile-first UI shell with bottom nav"
+### Task 6: Redesign — Bottom navigation bar + layout shell — completed 2026-03-24T09:48:28Z by cron
+- [x] Complete UI rewrite of static/index.html
+- [x] Design system: dark theme, clean modern look, system font stack
+- [x] Bottom navigation bar (fixed, 4 tabs): Chat, Approvals, Activity, Insights
+- [x] Each tab has an icon (use simple SVG icons, no external libraries)
+- [x] Active tab highlighted with accent color
+- [x] Badge count on Approvals tab for pending items
+- [x] Top bar: "Council" title + settings gear icon
+- [x] Settings opens as a slide-up modal/sheet
+- [x] Everything must be mobile-responsive (max-width: 100vw, no horizontal scroll)
+- [x] Safe area padding for iPhone notch (env(safe-area-inset-top))
+- [x] Git commit: "feat: mobile-first UI shell with bottom nav"
 
-### Task 7: Chat tab — polished messaging interface
-- [ ] Chat bubbles: user messages right-aligned (blue), agent messages left-aligned (dark gray)
-- [ ] Message input: fixed at bottom above the nav bar, with send button
-- [ ] Auto-scroll to newest message
-- [ ] Show typing indicator while waiting for response (three animated dots)
-- [ ] When agent proposes actions, show inline action cards:
+### Task 7: Chat tab — polished messaging interface — completed 2026-03-24T09:50:13Z by cron
+- [x] Chat bubbles: user messages right-aligned (blue), agent messages left-aligned (dark gray)
+- [x] Message input: fixed at bottom above the nav bar, with send button
+- [x] Auto-scroll to newest message
+- [x] Show typing indicator while waiting for response (three animated dots)
+- [x] When agent proposes actions, show inline action cards:
   - Tier 1 (auto): green left border, "Auto-executed" label, subtle
   - Tier 2 (notify): yellow left border, "Executed" label
   - Tier 3 (approve): orange left border, "Needs approval" label, with approve/reject buttons inline
   - Tier 4 (blocked): red left border, "Blocked" label with reason
-- [ ] Council verdicts collapsible inside action cards (tap to expand)
+- [x] Council verdicts collapsible inside action cards (tap to expand)
   - Show each checker: policy ✓/✗, safety ✓/✗, intent ✓/✗
   - Show reasoning for each
   - Show latency
-- [ ] Smooth animations on new messages (fade in + slide up)
-- [ ] Git commit: "feat: polished chat interface"
+- [x] Smooth animations on new messages (fade in + slide up)
+- [x] Git commit: "feat: polished chat interface"
 
-### Task 8: Approvals tab — swipeable cards
-- [ ] List of pending Tier 3 actions as cards
-- [ ] Each card shows: action description, tool name, timestamp
-- [ ] Council verdicts displayed on each card (3 chips: policy/safety/intent)
-- [ ] Each verdict chip shows: checker name, APPROVE/FLAG/BLOCK, one-line reason
-- [ ] If first-use escalation: show "🆕 First time using this tool" badge
-- [ ] Two action buttons per card: ✓ Approve (green) and ✕ Reject (red)
-- [ ] After approval/rejection: card animates out with slide + fade
-- [ ] Empty state: centered message "All clear — no actions pending" with a checkmark icon
-- [ ] Pull-to-refresh on mobile
-- [ ] Git commit: "feat: polished approvals interface"
+### Task 8: Approvals tab — swipeable cards — completed 2026-03-24T10:04:55Z by cron
+- [x] List of pending Tier 3 actions as cards
+- [x] Each card shows: action description, tool name, timestamp
+- [x] Council verdicts displayed on each card (3 chips: policy/safety/intent)
+- [x] Each verdict chip shows: checker name, APPROVE/FLAG/BLOCK, one-line reason
+- [x] If first-use escalation: show "🆕 First time using this tool" badge
+- [x] Two action buttons per card: ✓ Approve (green) and ✕ Reject (red)
+- [x] After approval/rejection: card animates out with slide + fade
+- [x] Empty state: centered message "All clear — no actions pending" with a checkmark icon
+- [x] Pull-to-refresh on mobile
+- [x] Git commit: "feat: polished approvals interface"
 
 ### Task 9: Activity tab — live event timeline
 - [ ] Vertical timeline with color-coded dots
