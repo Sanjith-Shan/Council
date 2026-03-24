@@ -7,6 +7,7 @@ and serves the web UI. Run with: python server.py
 
 import os
 import json
+from pathlib import Path
 from contextlib import asynccontextmanager
 
 from dotenv import load_dotenv
@@ -22,6 +23,7 @@ from vaaf.models import (
     RiskProfile,
 )
 from vaaf.council import evaluate_action
+from vaaf.benchmark_runner import run_benchmark, BENCHMARK_RESULTS_PATH
 from vaaf.tier import TierClassifier
 from vaaf.agent import get_agent_response, extract_proposed_actions, simulate_tool_execution
 from vaaf.audit import AuditLog
@@ -156,6 +158,8 @@ app.add_middleware(
     allow_headers=["*"],
 )
 app.mount("/static", StaticFiles(directory="static"), name="static")
+
+benchmark_results_path: Path = BENCHMARK_RESULTS_PATH
 
 
 # ── Request/Response models ───────────────────────────────────────────────
@@ -524,6 +528,30 @@ async def get_insights():
     """Get aggregated stats."""
     stats = audit_log.get_stats()
     return {"stats": stats.model_dump(), "goal": user_goal}
+
+
+@app.post("/api/benchmark/run")
+async def benchmark_run():
+    """Execute the full benchmark suite and persist the latest results."""
+    if not client:
+        raise HTTPException(status_code=500, detail="OpenAI API key not configured")
+
+    results = await run_benchmark(client, tier_classifier, risk_profile, audit_log, user_goal)
+    benchmark_results_path.write_text(json.dumps(results, indent=2))
+    return {"results": results}
+
+
+@app.get("/api/benchmark/results")
+async def benchmark_results():
+    """Return the last saved benchmark results if available."""
+    if not benchmark_results_path.exists():
+        raise HTTPException(status_code=404, detail="Benchmark has not been run yet")
+
+    try:
+        data = json.loads(benchmark_results_path.read_text())
+    except json.JSONDecodeError as exc:  # pragma: no cover - corrupted file
+        raise HTTPException(status_code=500, detail=f"Benchmark results unreadable: {exc}")
+    return {"results": data}
 
 
 @app.get("/api/actions")
