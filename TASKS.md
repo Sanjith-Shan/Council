@@ -40,7 +40,7 @@
 - [x] Add user_name field (used in UI greeting)
 - [x] Load on server startup
 - [x] Add API endpoint: GET/POST /api/settings for all user settings
-- [ ] Git commit: "feat: persistent settings"
+- [x] Git commit: "feat: persistent settings"
 
 ### Task 4: Improve risk profile onboarding
 - [ ] Add 2 more onboarding questions:
