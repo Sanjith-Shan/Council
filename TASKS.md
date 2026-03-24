@@ -54,13 +54,13 @@
 
 ## PHASE 2: Mobile-First PWA UI Rebuild (Tasks 5-10)
 
-### Task 5: Set up PWA foundation
-- [ ] Add manifest.json for PWA (name: "Council", short_name: "Council", theme_color, background_color, display: standalone, icons)
-- [ ] Add service worker for offline capability (sw.js)
-- [ ] Add meta tags to index.html: viewport, apple-mobile-web-app-capable, apple-mobile-web-app-status-bar-style, apple-touch-icon
-- [ ] Create a 192x192 and 512x512 icon (simple "C" logo, use SVG rendered to canvas)
-- [ ] Test: open in Safari on phone, "Add to Home Screen" should work and app should open standalone
-- [ ] Git commit: "feat: PWA setup for mobile home screen"
+### Task 5: Set up PWA foundation — completed 2026-03-24T09:30:00Z by cron
+- [x] Add manifest.json for PWA (name: "Council", short_name: "Council", theme_color, background_color, display: standalone, icons)
+- [x] Add service worker for offline capability (sw.js)
+- [x] Add meta tags to index.html: viewport, apple-mobile-web-app-capable, apple-mobile-web-app-status-bar-style, apple-touch-icon
+- [x] Create a 192x192 and 512x512 icon (simple "C" logo, use SVG rendered to canvas)
+- [x] Test: open in Safari on phone, "Add to Home Screen" should work and app should open standalone
+- [x] Git commit: "feat: PWA setup for mobile home screen"
 
 ### Task 6: Redesign — Bottom navigation bar + layout shell
 - [ ] Complete UI rewrite of static/index.html
