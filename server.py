@@ -308,6 +308,27 @@ async def chat(req: ChatRequest):
     which are intercepted by Council before execution."""
     global chat_history
 
+    if openclaw_client:
+        result = await openclaw_client.send_message(req.message, chat_history[-20:])
+        if not result["error"]:
+            chat_history.append({"role": "user", "content": req.message})
+            chat_history.append({"role": "assistant", "content": result["text"]})
+            audit_log.log_event(ActivityEvent(
+                event_type="message_received",
+                summary=f"User: {req.message[:100]}",
+            ))
+            audit_log.log_event(ActivityEvent(
+                event_type="message_sent",
+                summary=f"Agent: {result['text'][:100]}",
+            ))
+            return {
+                "agent_text": result["text"],
+                "actions": [],
+                "tool_results": [],
+                "source": "openclaw",
+            }
+        # If OpenClaw fails, fall through to standalone agent
+
     if not client:
         raise HTTPException(status_code=500, detail="OpenAI API key not configured. Set OPENAI_API_KEY in .env")
 

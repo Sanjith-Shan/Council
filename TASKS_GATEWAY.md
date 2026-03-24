@@ -40,7 +40,7 @@
 - [x] Git commit: "feat: initialize OpenClaw gateway on startup"
 
 ## Task 3: Route chat through OpenClaw gateway
-- [ ] In the `/api/chat` endpoint, add routing at the TOP of the function:
+- [x] In the `/api/chat` endpoint, add routing at the TOP of the function:
   ```python
   if openclaw_client:
       result = await openclaw_client.send_message(req.message, chat_history[-20:])
@@ -63,9 +63,9 @@
           }
       # If OpenClaw fails, fall through to standalone agent
   ```
-- [ ] The existing standalone chat code remains as fallback
-- [ ] Test: send a message through the UI, verify it reaches OpenClaw (check OpenClaw logs)
-- [ ] Git commit: "feat: route chat through OpenClaw gateway"
+- [x] The existing standalone chat code remains as fallback
+- [x] Test: send a message through the UI, verify it reaches OpenClaw (check OpenClaw logs)
+- [x] Git commit: "feat: route chat through OpenClaw gateway"
 
 ## Task 4: Add OPENCLAW_GATEWAY_TOKEN to .env
 - [ ] Read the current gateway token: run `openclaw config get gateway.auth.token`
