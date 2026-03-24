@@ -37,6 +37,26 @@ ONBOARDING_QUESTIONS = [
             {"key": "c", "label": "Try it and let me know how it went", "value": "aggressive"},
         ],
     },
+    {
+        "id": "primary_goal",
+        "question": "What is your primary goal?",
+        "options": [
+            {"key": "a", "label": "Grow business", "value": "grow_business"},
+            {"key": "b", "label": "Manage tasks", "value": "manage_tasks"},
+            {"key": "c", "label": "Research", "value": "research"},
+            {"key": "d", "label": "Content creation", "value": "content_creation"},
+            {"key": "e", "label": "Other", "value": "other"},
+        ],
+    },
+    {
+        "id": "new_tool_discovery",
+        "question": "How do you feel about the agent using new tools it discovers?",
+        "options": [
+            {"key": "a", "label": "Conservative", "value": "conservative"},
+            {"key": "b", "label": "Moderate", "value": "moderate"},
+            {"key": "c", "label": "Aggressive", "value": "aggressive"},
+        ],
+    },
 ]
 
 

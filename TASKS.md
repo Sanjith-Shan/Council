@@ -42,13 +42,13 @@
 - [x] Add API endpoint: GET/POST /api/settings for all user settings
 - [x] Git commit: "feat: persistent settings"
 
-### Task 4: Improve risk profile onboarding
-- [ ] Add 2 more onboarding questions:
+### Task 4: Improve risk profile onboarding — completed 2026-03-24T09:04:27Z by cron
+- [x] Add 2 more onboarding questions:
   - "What is your primary goal?" (multiple choice: grow business, manage tasks, research, content creation, other)
   - "How do you feel about the agent using new tools it discovers?" (conservative/moderate/aggressive)
-- [ ] Store selected goal as user_goal automatically
-- [ ] Add progressive refinement: endpoint POST /api/profile/suggest that returns new questions based on usage patterns
-- [ ] Git commit: "feat: enhanced risk profile onboarding"
+- [x] Store selected goal as user_goal automatically
+- [x] Add progressive refinement: endpoint POST /api/profile/suggest that returns new questions based on usage patterns
+- [x] Git commit: "feat: enhanced risk profile onboarding"
 
 ---
 

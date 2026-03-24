@@ -45,6 +45,72 @@ user_name = db.get_user_setting("user_name", "there")
 chat_history: list[dict] = []  # OpenAI message format
 
 
+def _map_primary_goal(goal_key: str | None) -> str | None:
+    """Map onboarding goal choices to human-readable user goal text."""
+    if not goal_key:
+        return None
+
+    goal_map = {
+        "grow_business": "Grow my business",
+        "manage_tasks": "Manage my tasks effectively",
+        "research": "Research and learn quickly",
+        "content_creation": "Create high-quality content",
+        "other": "General productivity and assistance",
+    }
+    return goal_map.get(goal_key)
+
+
+def _suggest_profile_questions() -> list[dict]:
+    """Generate follow-up profile questions from usage patterns."""
+    suggestions: list[dict] = []
+    actions = audit_log.actions
+
+    if not actions:
+        return [
+            {
+                "id": "suggest_contact_scope",
+                "question": "Should first-time outreach messages always require your approval?",
+                "options": ["always", "only_external", "never"],
+                "reason": "No usage history yet, so we suggest setting a clear communication boundary.",
+            }
+        ]
+
+    total_actions = len(actions)
+    first_use_count = sum(1 for a in actions if a.first_use_escalated)
+    approval_count = sum(1 for a in actions if a.status.value == "pending_approval")
+
+    if first_use_count >= 3:
+        suggestions.append({
+            "id": "suggest_new_tool_policy",
+            "question": "You've had several first-time tool escalations. Should new tools default to extra review?",
+            "options": ["yes_strict", "risk_based", "no"],
+            "reason": f"{first_use_count} first-use escalations observed.",
+        })
+
+    if approval_count >= max(3, total_actions // 3):
+        suggestions.append({
+            "id": "suggest_approval_threshold",
+            "question": "Would you like to tighten approval thresholds for medium-risk actions?",
+            "options": ["tighten", "keep_current", "relax"],
+            "reason": f"{approval_count} actions currently require approval.",
+        })
+
+    tools = {}
+    for action in actions[-50:]:
+        tools[action.action.tool_name] = tools.get(action.action.tool_name, 0) + 1
+    if tools:
+        top_tool, top_count = max(tools.items(), key=lambda kv: kv[1])
+        if top_count >= 5:
+            suggestions.append({
+                "id": "suggest_tool_autonomy",
+                "question": f"You frequently use {top_tool}. Should low-risk {top_tool} actions be less interruptive?",
+                "options": ["yes", "only_read_only", "no"],
+                "reason": f"{top_tool} used {top_count} times recently.",
+            })
+
+    return suggestions
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     global client
@@ -113,15 +179,33 @@ async def get_onboarding():
 @app.post("/api/profile")
 async def update_profile(req: ProfileAnswers):
     """Update risk profile from onboarding answers."""
-    global risk_profile
+    global risk_profile, user_goal
     risk_profile = build_profile(req.answers)
     db.save_risk_profile(risk_profile)
+
+    primary_goal = _map_primary_goal(req.answers.get("primary_goal"))
+    if primary_goal:
+        user_goal = primary_goal
+        db.set_user_setting("user_goal", user_goal)
+
     audit_log.log_event(ActivityEvent(
         event_type="profile_updated",
         summary="Risk profile updated",
-        details=risk_profile.model_dump(),
+        details={
+            **risk_profile.model_dump(),
+            "user_goal": user_goal,
+        },
     ))
-    return {"profile": risk_profile.model_dump()}
+    return {"profile": risk_profile.model_dump(), "user_goal": user_goal}
+
+
+@app.post("/api/profile/suggest")
+async def suggest_profile_questions():
+    """Return adaptive follow-up profile questions from observed usage patterns."""
+    return {
+        "questions": _suggest_profile_questions(),
+        "based_on_actions": len(audit_log.actions),
+    }
 
 
 @app.post("/api/goal")
