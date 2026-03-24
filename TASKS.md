@@ -186,16 +186,16 @@
 
 ## PHASE 4: Polish + Demo Prep (Tasks 15-17)
 
-### Task 15: Visual polish pass
-- [ ] Consistent spacing, padding, and typography across all tabs
-- [ ] Smooth transitions between tabs (no jarring content jumps)
-- [ ] Loading states: skeleton screens while data loads
-- [ ] Error states: friendly error messages, not raw JSON
-- [ ] Empty states for each tab (Activity: "No activity yet", etc.)
-- [ ] Color consistency: all greens same shade, all reds same shade, etc.
-- [ ] Test on iPhone Safari viewport (375px wide)
-- [ ] Test on Android Chrome viewport (360px wide)
-- [ ] Git commit: "chore: visual polish"
+### Task 15: Visual polish pass — completed 2026-03-24T12:24:37Z by cron
+- [x] Consistent spacing, padding, and typography across all tabs
+- [x] Smooth transitions between tabs (no jarring content jumps)
+- [x] Loading states: skeleton screens while data loads
+- [x] Error states: friendly error messages, not raw JSON
+- [x] Empty states for each tab (Activity: "No activity yet", etc.)
+- [x] Color consistency: all greens same shade, all reds same shade, etc.
+- [x] Test on iPhone Safari viewport (375px wide)
+- [x] Test on Android Chrome viewport (360px wide)
+- [x] Git commit: "chore: visual polish"
 
 ### Task 16: Demo scenario setup
 - [ ] Create a demo script file: DEMO.md

@@ -23,6 +23,7 @@
   --warning: #eab308;
   --danger: #ef4444;
   --purple: #8b5cf6;
+  --orange: #f97316;
   --radius-card: 12px;
   --radius-btn: 8px;
   --radius-pill: 24px;
@@ -40,8 +41,9 @@ button, input { font-family: inherit; }
 .settings-btn { width: 44px; height: 44px; border: 1px solid var(--border); border-radius: 50%; background: var(--surface2); color: var(--text); display: grid; place-items: center; cursor: pointer; }
 .settings-btn svg { width: 18px; height: 18px; }
 .content { flex: 1; min-height: 0; overflow: hidden; padding-bottom: calc(78px + env(safe-area-inset-bottom)); }
-.panel { display: none; height: 100%; overflow: hidden; }
-.panel.active { display: block; }
+.panel { display: none; height: 100%; overflow: hidden; opacity: 0; transform: translateY(8px); }
+.panel.active { display: block; animation: panelIn .18s ease forwards; }
+@keyframes panelIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
 .chat-panel { display: flex; flex-direction: column; height: 100%; }
 .chat-messages, .approval-list, .activity-list, .insights { height: 100%; overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 14px; }
 .msg { max-width: 84%; padding: 10px 12px; border-radius: 12px; font-size: 14px; line-height: 1.45; margin-bottom: 10px; word-wrap: break-word; animation: fadeUp .18s ease; }
@@ -53,7 +55,7 @@ button, input { font-family: inherit; }
 .action-card { margin-top: 8px; padding: 8px 10px; border-radius: 10px; font-size: 12px; border-left: 4px solid; }
 .action-card.auto { border-color: var(--success); background: #132417; }
 .action-card.notify { border-color: var(--warning); background: #2a230d; }
-.action-card.approve { border-color: #f97316; background: #2a1a0f; }
+.action-card.approve { border-color: var(--orange); background: #2a1a0f; }
 .action-card.blocked { border-color: var(--danger); background: #2a1212; }
 .tier-label { font-size: 10px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.4px; margin-bottom: 3px; }
 .council-votes { margin-top: 6px; display: flex; flex-wrap: wrap; gap: 6px; }
@@ -91,7 +93,7 @@ button, input { font-family: inherit; }
 .event-dot { width: 8px; height: 8px; border-radius: 50%; margin-top: 6px; }
 .event-dot.green { background: var(--success); }
 .event-dot.yellow { background: var(--warning); }
-.event-dot.orange { background: #f97316; }
+.event-dot.orange { background: var(--orange); }
 .event-dot.red { background: var(--danger); }
 .event-dot.blue { background: var(--accent); }
 .event-dot.gray { background: #6b7280; }
@@ -125,7 +127,7 @@ button, input { font-family: inherit; }
 .stat-card .label { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
 .stat-card.green .number { color: var(--success); }
 .stat-card.yellow .number { color: var(--warning); }
-.stat-card.orange .number { color: #f59e0b; }
+.stat-card.orange .number { color: var(--orange); }
 .stat-card.red .number { color: var(--danger); }
 .stat-card.blue .number { color: var(--accent); }
 .stat-card.purple .number { color: var(--purple); }
@@ -192,6 +194,14 @@ button, input { font-family: inherit; }
 .onboarding-btn { min-height: 44px; border-radius: 10px; border: 1px solid var(--border); background: #1a1a1a; color: var(--text); font-weight: 600; }
 .onboarding-btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
 .onboarding-btn:disabled { opacity: .5; }
+
+.error-banner { margin: 8px 14px 0; padding: 10px 12px; border-radius: 10px; background: #2a1212; border: 1px solid #6f1f1f; color: #fecaca; font-size: 12px; line-height: 1.4; }
+.skeleton-wrap { display: grid; gap: 10px; }
+.skeleton { border-radius: 12px; background: linear-gradient(90deg, #171717 25%, #232323 37%, #171717 63%); background-size: 400% 100%; animation: shimmer 1.2s ease infinite; }
+.skeleton.card { height: 72px; border: 1px solid #242424; }
+.skeleton.line { height: 12px; border-radius: 8px; }
+@keyframes shimmer { 0% { background-position: 100% 0; } 100% { background-position: 0 0; } }
+
 </style>
 </head>
 <body>
@@ -238,6 +248,26 @@ async function requestNotificationPermission() {
   if (!('Notification' in window) || Notification.permission !== 'default') return;
   try { await Notification.requestPermission(); } catch (_) {}
 }
+
+function setPanelError(panelId, message) {
+  const panel = document.getElementById(panelId);
+  if (!panel) return;
+  const existing = panel.querySelector('.error-banner');
+  if (existing) existing.remove();
+  const err = document.createElement('div');
+  err.className = 'error-banner';
+  err.textContent = message;
+  panel.prepend(err);
+}
+function clearPanelError(panelId) {
+  const panel = document.getElementById(panelId);
+  const existing = panel?.querySelector('.error-banner');
+  if (existing) existing.remove();
+}
+function loadingCards(count = 3) {
+  return `<div class="skeleton-wrap">${Array.from({ length: count }).map(()=>'<div class="skeleton card"></div>').join('')}</div>`;
+}
+
 function notifyApprovalNeeded(action) {
   if (!('Notification' in window) || Notification.permission !== 'granted' || !action?.id || notifiedApprovalIds.has(action.id)) return;
   notifiedApprovalIds.add(action.id);
@@ -249,7 +279,7 @@ function notifyApprovalNeeded(action) {
     n.close();
   };
 }
-async function sendMessage() { const input = document.getElementById('chat-input'); const msg = input.value.trim(); if (!msg) return; input.value = ''; addChatMsg('user', msg); document.getElementById('send-btn').disabled = true; addChatMsg('system', '<span class="typing-dots"><span>.</span><span>.</span><span>.</span></span> Agent is thinking...'); try { const res = await fetch('/api/chat', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ message: msg }) }); const msgs = document.getElementById('chat-messages'); const lastSystem = msgs.querySelector('.msg.system:last-child'); if (lastSystem && (lastSystem.innerHTML.includes('loading') || lastSystem.innerHTML.includes('typing-dots'))) lastSystem.remove(); if (!res.ok) { const err = await res.json(); addChatMsg('system', `Error: ${err.detail || 'Unknown error'}`); return; } const data = await res.json(); if (data.agent_text) addChatMsg('agent', data.agent_text); if (data.actions?.length) {
+async function sendMessage() { const input = document.getElementById('chat-input'); const msg = input.value.trim(); if (!msg) return; input.value = ''; addChatMsg('user', msg); document.getElementById('send-btn').disabled = true; addChatMsg('system', '<span class="typing-dots"><span>.</span><span>.</span><span>.</span></span> Agent is thinking...'); try { const res = await fetch('/api/chat', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ message: msg }) }); const msgs = document.getElementById('chat-messages'); const lastSystem = msgs.querySelector('.msg.system:last-child'); if (lastSystem && (lastSystem.innerHTML.includes('loading') || lastSystem.innerHTML.includes('typing-dots'))) lastSystem.remove(); if (!res.ok) { let errMsg = 'Could not send message. Please try again.'; try { const err = await res.json(); if (err?.detail) errMsg = `Could not send message: ${err.detail}`; } catch (_) {} addChatMsg('system', errMsg); return; } const data = await res.json(); if (data.agent_text) addChatMsg('agent', data.agent_text); if (data.actions?.length) {
       let html = '';
       for (const a of data.actions) {
         const tierClass = getTierClass(a.tier);
@@ -280,11 +310,22 @@ async function sendMessage() { const input = document.getElementById('chat-input
     }await updateApprovalBadge(); } catch (e) { const msgs = document.getElementById('chat-messages'); const lastSystem = msgs.querySelector('.msg.system:last-child'); if (lastSystem && (lastSystem.innerHTML.includes('loading') || lastSystem.innerHTML.includes('typing-dots'))) lastSystem.remove(); addChatMsg('system', `Error: ${e.message}`); } finally { document.getElementById('send-btn').disabled = false; document.getElementById('chat-input').focus(); } }
 function addChatMsg(role, content, isHtml = false) { const msgs = document.getElementById('chat-messages'); const div = document.createElement('div'); div.className = `msg ${role}`; div.innerHTML = isHtml ? content : `<pre>${escapeHtml(content)}</pre>`; msgs.appendChild(div); msgs.scrollTop = msgs.scrollHeight; }
 async function loadApprovals() {
-  const res = await fetch('/api/approvals');
-  const data = await res.json();
   const list = document.getElementById('approval-list');
-  const pending = data.pending || [];
   const refreshEl = document.getElementById('approvals-refresh');
+  list.innerHTML = `${refreshEl ? refreshEl.outerHTML : ''}${loadingCards(3)}`;
+  clearPanelError('panel-approvals');
+  let data;
+  try {
+    const res = await fetch('/api/approvals');
+    if (!res.ok) throw new Error('Failed approvals request');
+    data = await res.json();
+  } catch (_) {
+    list.innerHTML = `${refreshEl ? refreshEl.outerHTML : ''}<div class="empty">Could not load approvals right now.</div>`;
+    setPanelError('panel-approvals', 'Approvals are temporarily unavailable. Pull to refresh to retry.');
+    setupApprovalsPullToRefresh();
+    return;
+  }
+  const pending = data.pending || [];
   if (!pending.length) {
     list.innerHTML = `${refreshEl ? refreshEl.outerHTML : ''}<div class="empty"><svg class="check-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m20 6-11 11-5-5"></path></svg><span>All clear — no actions pending</span></div>`;
     setupApprovalsPullToRefresh();
@@ -328,6 +369,8 @@ async function loadActivity() {
     const data = await res.json();
     const list = document.getElementById('activity-list');
     const filterBar = document.getElementById('activity-filters')?.outerHTML || '';
+    list.innerHTML = `${filterBar}${loadingCards(4)}`;
+    clearPanelError('panel-activity');
     const events = (data.events || []).filter(matchesActivityFilter);
     if (!events.length) {
       list.innerHTML = `${filterBar}<div class="empty">No activity yet. Start chatting.</div>`;
@@ -337,18 +380,35 @@ async function loadActivity() {
   } catch (e) {
     const list = document.getElementById('activity-list');
     const filterBar = document.getElementById('activity-filters')?.outerHTML || '';
-    list.innerHTML = `${filterBar}<div class="empty">Could not load activity feed.</div>`;
+    list.innerHTML = `${filterBar}${loadingCards(4)}`;
+    clearPanelError('panel-activity');
+    list.innerHTML = `${filterBar}<div class="empty">Could not load activity feed right now.</div>`;
+    setPanelError('panel-activity', 'Activity feed is temporarily unavailable. It will retry automatically.');
   }
 }
 async function loadInsights() {
-  const [statsRes, settingsRes, activityRes] = await Promise.all([
-    fetch('/api/insights'),
-    fetch('/api/settings'),
-    fetch('/api/activity')
-  ]);
-  const statsData = await statsRes.json();
-  const settingsData = await settingsRes.json();
-  const activityData = await activityRes.json();
+  document.getElementById('stat-grid').innerHTML = loadingCards(4);
+  document.getElementById('summary-text').textContent = 'Loading summary...';
+  document.getElementById('suggestions-list').innerHTML = '<p class="muted">Loading suggestions...</p>';
+  clearPanelError('panel-insights');
+  let statsData, settingsData, activityData;
+  try {
+    const [statsRes, settingsRes, activityRes] = await Promise.all([
+      fetch('/api/insights'),
+      fetch('/api/settings'),
+      fetch('/api/activity')
+    ]);
+    if (!statsRes.ok || !settingsRes.ok || !activityRes.ok) throw new Error('Insights request failed');
+    statsData = await statsRes.json();
+    settingsData = await settingsRes.json();
+    activityData = await activityRes.json();
+  } catch (_) {
+    setPanelError('panel-insights', 'Insights are temporarily unavailable. This tab retries when reopened.');
+    document.getElementById('stat-grid').innerHTML = '<div class="empty" style="grid-column:1 / -1">Could not load stats.</div>';
+    document.getElementById('summary-text').textContent = 'Unable to load summary right now.';
+    document.getElementById('suggestions-list').innerHTML = '<p class="muted">Suggestions unavailable right now.</p>';
+    return;
+  }
 
   const name = (settingsData.user_name || 'there').trim();
   const goal = (settingsData.user_goal || statsData.goal || 'No goal set yet').trim();
