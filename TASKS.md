@@ -150,16 +150,16 @@
 - [x] All settings persist via SQLite
 - [x] Git commit: "feat: settings page"
 
-### Task 12: Onboarding flow for new users
-- [ ] On first visit (no risk profile in database), show a fullscreen onboarding flow
-- [ ] Step 1: "Welcome to Council" — brief explanation (2 sentences max)
-- [ ] Step 2: "Set your name" — text input
-- [ ] Step 3: "Set your goal" — text input
-- [ ] Step 4-7: Risk profile multiple-choice questions (one per screen)
-- [ ] Step 8: "You're all set" — summary of their profile, button to start
-- [ ] After completion, transitions to the main Chat tab
-- [ ] Smooth transitions between steps (slide left animation)
-- [ ] Git commit: "feat: onboarding flow"
+### Task 12: Onboarding flow for new users — completed 2026-03-24T11:25:21Z by cron
+- [x] On first visit (no risk profile in database), show a fullscreen onboarding flow
+- [x] Step 1: "Welcome to Council" — brief explanation (2 sentences max)
+- [x] Step 2: "Set your name" — text input
+- [x] Step 3: "Set your goal" — text input
+- [x] Step 4-7: Risk profile multiple-choice questions (one per screen)
+- [x] Step 8: "You're all set" — summary of their profile, button to start
+- [x] After completion, transitions to the main Chat tab
+- [x] Smooth transitions between steps (slide left animation)
+- [x] Git commit: "feat: onboarding flow"
 
 ### Task 13: Push notification support (basic)
 - [ ] When a Tier 3 action is queued, send a browser notification (if permissions granted)

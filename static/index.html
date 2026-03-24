@@ -172,6 +172,26 @@ button, input { font-family: inherit; }
 .loading { display: inline-block; width: 14px; height: 14px; border: 2px solid #5f5f5f; border-top-color: var(--accent); border-radius: 50%; animation: spin .7s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
 .typing-dots{display:inline-flex;gap:4px;align-items:center} .typing-dots span{opacity:0;color:var(--text-muted);font-weight:700;animation:dot 1s infinite;} .typing-dots span:nth-child(1){animation-delay:0s} .typing-dots span:nth-child(2){animation-delay:0.15s} .typing-dots span:nth-child(3){animation-delay:0.3s} @keyframes dot{0%{opacity:0}50%{opacity:1}100%{opacity:0}}
+.onboarding-overlay { position: fixed; inset: 0; z-index: 120; background: var(--bg); display: none; }
+.onboarding-overlay.show { display: block; }
+.onboarding-shell { height: 100%; display: flex; flex-direction: column; padding: calc(env(safe-area-inset-top) + 16px) 16px calc(16px + env(safe-area-inset-bottom)); }
+.onboarding-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+.onboarding-brand { font-weight: 700; letter-spacing: .2px; }
+.onboarding-progress { color: var(--text-muted); font-size: 12px; }
+.onboarding-viewport { flex: 1; overflow: hidden; }
+.onboarding-track { display: flex; width: 100%; height: 100%; transition: transform .24s ease; }
+.onboarding-step { min-width: 100%; height: 100%; overflow-y: auto; -webkit-overflow-scrolling: touch; padding-bottom: 16px; }
+.onboarding-card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 16px; }
+.onboarding-card h2 { font-size: 22px; margin-bottom: 8px; }
+.onboarding-card p { color: var(--text-muted); line-height: 1.45; font-size: 14px; }
+.onboarding-input { width: 100%; min-height: 46px; border-radius: 10px; border: 1px solid #333; background: #111; color: var(--text); padding: 10px 12px; font-size: 15px; margin-top: 10px; }
+.onboarding-options { margin-top: 10px; display: grid; gap: 8px; }
+.onboarding-option { display: flex; gap: 10px; align-items: center; background: var(--surface2); border: 1px solid #2a2a2a; border-radius: 12px; padding: 11px; font-size: 14px; }
+.onboarding-option input { accent-color: var(--accent); }
+.onboarding-nav { margin-top: 12px; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.onboarding-btn { min-height: 44px; border-radius: 10px; border: 1px solid var(--border); background: #1a1a1a; color: var(--text); font-weight: 600; }
+.onboarding-btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+.onboarding-btn:disabled { opacity: .5; }
 </style>
 </head>
 <body>
@@ -194,6 +214,17 @@ button, input { font-family: inherit; }
     <button class="tab" data-tab="activity" onclick="switchTab('activity')"><svg viewBox="0 0 24 24"><path d="M3 12h4l2-5 4 10 2-5h6"></path></svg><span>Activity</span></button>
     <button class="tab" data-tab="insights" onclick="switchTab('insights')"><svg viewBox="0 0 24 24"><path d="M4 19h16"></path><path d="M7 15V9"></path><path d="M12 15V5"></path><path d="M17 15v-3"></path></svg><span>Insights</span></button>
   </nav>
+</div>
+<div class="onboarding-overlay" id="onboarding-overlay" aria-live="polite">
+  <div class="onboarding-shell">
+    <div class="onboarding-header">
+      <div class="onboarding-brand">Council Setup</div>
+      <div class="onboarding-progress" id="onboarding-progress">Step 1 of 8</div>
+    </div>
+    <div class="onboarding-viewport">
+      <div class="onboarding-track" id="onboarding-track"></div>
+    </div>
+  </div>
 </div>
 <div class="modal-overlay" id="settings-modal" onclick="if(event.target===this)closeSettings()"><div class="modal" role="dialog" aria-label="Settings"><div class="modal-handle"></div><button class="close-btn" onclick="closeSettings()">×</button><h2>Settings</h2><section class="settings-section"><h3>Risk Profile</h3><div id="settings-questions"></div><button class="save-btn" onclick="saveProfile()">Re-take questionnaire</button></section><section class="settings-section"><h3>Your Goal</h3><div class="settings-row"><input id="settings-name" class="settings-input" placeholder="Your name"><input id="settings-goal" class="settings-input" placeholder="Your goal"></div><button class="save-btn" onclick="saveGoalSettings()">Save goal</button></section><section class="settings-section"><h3>Audit Trail</h3><div class="audit-controls"><input id="audit-search" class="settings-input" placeholder="Search actions" oninput="renderAuditTrail()"><select id="audit-tier" class="settings-select" onchange="renderAuditTrail()"><option value="all">All tiers</option><option value="tier1_auto">Tier 1</option><option value="tier2_notify">Tier 2</option><option value="tier3_approve">Tier 3</option><option value="tier4_blocked">Tier 4</option></select></div><div id="audit-list" class="audit-list"></div><div class="audit-pagination"><button class="mini-btn" onclick="changeAuditPage(-1)">Prev</button><span id="audit-page" class="muted">Page 1</span><button class="mini-btn" onclick="changeAuditPage(1)">Next</button></div></section><section class="settings-section"><h3>Council Config</h3><label class="settings-switch"><span>Council enabled</span><input type="checkbox" id="cfg-enabled"></label><label class="settings-row"><span class="muted">Model</span><select id="cfg-model" class="settings-select"><option value="gpt-4o-mini">gpt-4o-mini</option><option value="gpt-4.1-mini">gpt-4.1-mini</option><option value="gpt-4o">gpt-4o</option></select></label><button class="save-btn" onclick="saveCouncilConfig()">Save config</button></section><section class="settings-section"><h3>About</h3><p class="muted">Council v0.1 · AI action review framework.</p><p><a href="https://github.com" target="_blank" rel="noopener" style="color:var(--accent)">GitHub repository</a></p></section></div></div>
 <script>
@@ -489,6 +520,75 @@ function toggleEventDetails(id) {
 
 
 let approvalsPullBound = false;
+
+const ONBOARDING_TOTAL_STEPS = 8;
+let onboardingQuestions = [];
+let onboardingAnswers = {};
+let onboardingStep = 0;
+
+function renderOnboarding() {
+  const track = document.getElementById('onboarding-track');
+  if (!track) return;
+  const q = onboardingQuestions;
+  const questionSteps = [q[0], q[1], q[2], q[3]].filter(Boolean);
+  const steps = [
+    `<section class="onboarding-step"><div class="onboarding-card"><h2>Welcome to Council</h2><p>Council reviews every proposed agent action before it runs. You stay in control while still moving fast.</p></div></section>`,
+    `<section class="onboarding-step"><div class="onboarding-card"><h2>Set your name</h2><p>We'll use this for greetings and context.</p><input id="onb-name" class="onboarding-input" placeholder="Your name" value="${escapeHtml(onboardingAnswers.user_name || '')}"></div></section>`,
+    `<section class="onboarding-step"><div class="onboarding-card"><h2>Set your goal</h2><p>What should Council optimize for?</p><input id="onb-goal" class="onboarding-input" placeholder="e.g., Grow my business" value="${escapeHtml(onboardingAnswers.user_goal || '')}"></div></section>`
+  ];
+  questionSteps.forEach((item, idx) => {
+    const options = (item.options || []).map(o => `<label class="onboarding-option"><input type="radio" name="onb-q-${idx}" value="${escapeHtml(o.value)}" ${onboardingAnswers[item.id] === o.value ? 'checked' : ''}>${escapeHtml(o.label)}</label>`).join('');
+    steps.push(`<section class="onboarding-step"><div class="onboarding-card"><h2>${escapeHtml(item.question)}</h2><div class="onboarding-options">${options}</div></div></section>`);
+  });
+  const summary = `<section class="onboarding-step"><div class="onboarding-card"><h2>You're all set</h2><p><strong>Name:</strong> ${escapeHtml(onboardingAnswers.user_name || 'Not set')}</p><p><strong>Goal:</strong> ${escapeHtml(onboardingAnswers.user_goal || 'Not set')}</p><p style="margin-top:8px">Tap Start to open Council chat.</p></div></section>`;
+  track.innerHTML = [...steps, summary].join('');
+  updateOnboardingStep();
+}
+function updateOnboardingStep() {
+  const track = document.getElementById('onboarding-track');
+  const progress = document.getElementById('onboarding-progress');
+  if (!track || !progress) return;
+  const stepCount = track.children.length || ONBOARDING_TOTAL_STEPS;
+  onboardingStep = Math.max(0, Math.min(onboardingStep, stepCount - 1));
+  track.style.transform = `translateX(-${onboardingStep * 100}%)`;
+  progress.textContent = `Step ${onboardingStep + 1} of ${stepCount}`;
+  let nav = document.getElementById('onboarding-nav');
+  if (!nav) { nav = document.createElement('div'); nav.id = 'onboarding-nav'; nav.className = 'onboarding-nav'; document.querySelector('.onboarding-shell').appendChild(nav); }
+  const isFinal = onboardingStep === stepCount - 1;
+  nav.innerHTML = `<button class="onboarding-btn" onclick="onboardingBack()" ${onboardingStep === 0 ? 'disabled' : ''}>Back</button><button class="onboarding-btn primary" onclick="onboardingNext()">${isFinal ? 'Start' : 'Next'}</button>`;
+}
+function onboardingBack() { onboardingStep -= 1; updateOnboardingStep(); }
+async function onboardingNext() {
+  const stepCount = document.getElementById('onboarding-track').children.length;
+  if (onboardingStep === 1) { const name = (document.getElementById('onb-name')?.value || '').trim(); if (!name) return alert('Please enter your name.'); onboardingAnswers.user_name = name; }
+  if (onboardingStep === 2) { const goal = (document.getElementById('onb-goal')?.value || '').trim(); if (!goal) return alert('Please enter your goal.'); onboardingAnswers.user_goal = goal; }
+  if (onboardingStep >= 3 && onboardingStep <= 6) { const idx = onboardingStep - 3; const q = onboardingQuestions[idx]; const val = document.querySelector(`input[name="onb-q-${idx}"]:checked`)?.value; if (!val) return alert('Please pick an option to continue.'); onboardingAnswers[q.id] = val; }
+  if (onboardingStep < stepCount - 1) { onboardingStep += 1; if (onboardingStep === stepCount - 1) renderOnboarding(); else updateOnboardingStep(); return; }
+  const profileAnswers = {};
+  for (const q of onboardingQuestions) if (onboardingAnswers[q.id]) profileAnswers[q.id] = onboardingAnswers[q.id];
+  await fetch('/api/settings', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ user_name: onboardingAnswers.user_name || '', user_goal: onboardingAnswers.user_goal || '' }) });
+  await fetch('/api/profile', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ answers: profileAnswers }) });
+  document.getElementById('onboarding-overlay').classList.remove('show');
+  switchTab('chat');
+  loadInsights();
+  addChatMsg('system', '✓ Onboarding complete. Council is ready.');
+}
+async function maybeStartOnboarding() {
+  try {
+    const [onboardingRes, settingsRes] = await Promise.all([fetch('/api/onboarding'), fetch('/api/settings')]);
+    const onboarding = await onboardingRes.json();
+    const settings = await settingsRes.json();
+    const profile = onboarding.current_profile || {};
+    const hasProfile = profile.raw_answers && Object.keys(profile.raw_answers).length > 0;
+    if (hasProfile) return;
+    onboardingQuestions = (onboarding.questions || []).slice(0, 4);
+    onboardingAnswers = { user_name: (settings.user_name && settings.user_name !== 'there') ? settings.user_name : '', user_goal: settings.user_goal || '' };
+    onboardingStep = 0;
+    renderOnboarding();
+    document.getElementById('onboarding-overlay').classList.add('show');
+  } catch (e) { console.warn('Onboarding check failed', e); }
+}
+
 function setupApprovalsPullToRefresh() {
   if (approvalsPullBound) return;
   const list = document.getElementById('approval-list');
@@ -540,6 +640,7 @@ function setupApprovalsPullToRefresh() {
 setInterval(updateApprovalBadge, 5000);
 setInterval(() => { const panel = document.getElementById('panel-activity'); if (panel && panel.classList.contains('active')) loadActivity(); }, 5000);
 updateApprovalBadge();
+maybeStartOnboarding();
 </script>
 </body>
 </html>
