@@ -161,13 +161,13 @@
 - [x] Smooth transitions between steps (slide left animation)
 - [x] Git commit: "feat: onboarding flow"
 
-### Task 13: Push notification support (basic)
-- [ ] When a Tier 3 action is queued, send a browser notification (if permissions granted)
-- [ ] Notification title: "Council: Action needs approval"
-- [ ] Notification body: action description
-- [ ] Clicking notification opens the Approvals tab
-- [ ] Request notification permission during onboarding
-- [ ] Git commit: "feat: browser push notifications for approvals"
+### Task 13: Push notification support (basic) — completed 2026-03-24T11:42:00Z by cron
+- [x] When a Tier 3 action is queued, send a browser notification (if permissions granted)
+- [x] Notification title: "Council: Action needs approval"
+- [x] Notification body: action description
+- [x] Clicking notification opens the Approvals tab
+- [x] Request notification permission during onboarding
+- [x] Git commit: "feat: browser push notifications for approvals"
 
 ### Task 14: Code cleanup and documentation
 - [ ] Clean up all files: remove dead code, unused imports

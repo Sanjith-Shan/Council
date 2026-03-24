@@ -230,6 +230,25 @@ button, input { font-family: inherit; }
 <script>
 if ('serviceWorker' in navigator) { window.addEventListener('load', () => navigator.serviceWorker.register('/static/sw.js').catch(() => {})); }
 function switchTab(tab) { document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === tab)); document.querySelectorAll('.panel').forEach(p => p.classList.toggle('active', p.id === `panel-${tab}`)); if (tab === 'approvals') loadApprovals(); if (tab === 'activity') loadActivity(); if (tab === 'insights') loadInsights(); }
+let notifiedApprovalIds = new Set();
+let notificationPermissionAsked = false;
+async function requestNotificationPermission() {
+  if (notificationPermissionAsked) return;
+  notificationPermissionAsked = true;
+  if (!('Notification' in window) || Notification.permission !== 'default') return;
+  try { await Notification.requestPermission(); } catch (_) {}
+}
+function notifyApprovalNeeded(action) {
+  if (!('Notification' in window) || Notification.permission !== 'granted' || !action?.id || notifiedApprovalIds.has(action.id)) return;
+  notifiedApprovalIds.add(action.id);
+  const body = action.description || 'An action is waiting for your review.';
+  const n = new Notification('Council: Action needs approval', { body, tag: `approval-${action.id}` });
+  n.onclick = () => {
+    try { window.focus(); } catch (_) {}
+    switchTab('approvals');
+    n.close();
+  };
+}
 async function sendMessage() { const input = document.getElementById('chat-input'); const msg = input.value.trim(); if (!msg) return; input.value = ''; addChatMsg('user', msg); document.getElementById('send-btn').disabled = true; addChatMsg('system', '<span class="typing-dots"><span>.</span><span>.</span><span>.</span></span> Agent is thinking...'); try { const res = await fetch('/api/chat', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ message: msg }) }); const msgs = document.getElementById('chat-messages'); const lastSystem = msgs.querySelector('.msg.system:last-child'); if (lastSystem && (lastSystem.innerHTML.includes('loading') || lastSystem.innerHTML.includes('typing-dots'))) lastSystem.remove(); if (!res.ok) { const err = await res.json(); addChatMsg('system', `Error: ${err.detail || 'Unknown error'}`); return; } const data = await res.json(); if (data.agent_text) addChatMsg('agent', data.agent_text); if (data.actions?.length) {
       let html = '';
       for (const a of data.actions) {
@@ -302,7 +321,7 @@ async function handleApproval(actionId, approved) {
   await updateApprovalBadge();
 }
 
-async function updateApprovalBadge() { const res = await fetch('/api/approvals'); const data = await res.json(); const count = data.pending?.length || 0; const badge = document.getElementById('approval-badge'); badge.textContent = count; badge.style.display = count > 0 ? 'flex' : 'none'; }
+async function updateApprovalBadge() { const res = await fetch('/api/approvals'); const data = await res.json(); const pending = data.pending || []; const count = pending.length || 0; const badge = document.getElementById('approval-badge'); badge.textContent = count; badge.style.display = count > 0 ? 'flex' : 'none'; const currentIds = new Set(pending.map(a => a.id)); notifiedApprovalIds.forEach(id => { if (!currentIds.has(id)) notifiedApprovalIds.delete(id); }); pending.forEach(notifyApprovalNeeded); }
 async function loadActivity() {
   try {
     const res = await fetch('/api/activity');
@@ -568,6 +587,7 @@ async function onboardingNext() {
   for (const q of onboardingQuestions) if (onboardingAnswers[q.id]) profileAnswers[q.id] = onboardingAnswers[q.id];
   await fetch('/api/settings', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ user_name: onboardingAnswers.user_name || '', user_goal: onboardingAnswers.user_goal || '' }) });
   await fetch('/api/profile', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ answers: profileAnswers }) });
+  await requestNotificationPermission();
   document.getElementById('onboarding-overlay').classList.remove('show');
   switchTab('chat');
   loadInsights();
