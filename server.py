@@ -6,12 +6,13 @@ and serves the web UI. Run with: python server.py
 """
 
 import os
+import json
 from contextlib import asynccontextmanager
 
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, StreamingResponse
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from openai import AsyncOpenAI
@@ -386,6 +387,54 @@ async def chat(req: ChatRequest):
         "actions": [_serialize_evaluated(ea) for ea in evaluated_actions],
         "tool_results": tool_results,
     }
+
+
+@app.post("/api/chat/stream")
+async def chat_stream(req: ChatRequest):
+    """Stream OpenClaw chat responses as SSE tokens."""
+    global chat_history
+
+    if not openclaw_client:
+        raise HTTPException(status_code=503, detail="Streaming unavailable in standalone mode")
+
+    async def event_stream():
+        chunks: list[str] = []
+        try:
+            async for token in openclaw_client.send_message_stream(req.message, chat_history[-20:]):
+                chunks.append(token)
+                payload = json.dumps({"token": token})
+                yield f"data: {payload}\\n\\n"
+
+            full_text = "".join(chunks).strip()
+            if full_text:
+                chat_history.append({"role": "user", "content": req.message})
+                chat_history.append({"role": "assistant", "content": full_text})
+                if len(chat_history) > 30:
+                    chat_history[:] = chat_history[-20:]
+
+                audit_log.log_event(ActivityEvent(
+                    event_type="message_received",
+                    summary=f"User: {req.message[:100]}",
+                ))
+                audit_log.log_event(ActivityEvent(
+                    event_type="message_sent",
+                    summary=f"Agent: {full_text[:100]}",
+                ))
+            yield "data: [DONE]\\n\\n"
+        except Exception as exc:
+            err_payload = json.dumps({"error": str(exc)[:200]})
+            yield f"data: {err_payload}\\n\\n"
+            yield "data: [DONE]\\n\\n"
+
+    return StreamingResponse(
+        event_stream(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+            "X-Accel-Buffering": "no",
+        },
+    )
 
 
 async def _process_action(action: ProposedAction):

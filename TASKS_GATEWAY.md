@@ -100,14 +100,14 @@
 - [x] Git commit: "feat: improved chat rendering for OpenClaw responses"
 
 ## Task 7: Add streaming support for OpenClaw responses
-- [ ] Add a new endpoint `POST /api/chat/stream` that uses SSE (Server-Sent Events)
-- [ ] Use OpenClawClient.send_message_stream() to stream tokens
-- [ ] In the frontend, when sending a message:
+- [x] Add a new endpoint `POST /api/chat/stream` that uses SSE (Server-Sent Events)
+- [x] Use OpenClawClient.send_message_stream() to stream tokens
+- [x] In the frontend, when sending a message:
   - Use `fetch` with `EventSource` or `ReadableStream` to read SSE
   - Show tokens appearing one by one in the agent's message bubble
   - Show a typing indicator while streaming
-- [ ] Fall back to non-streaming if SSE fails
-- [ ] Git commit: "feat: streaming chat responses"
+- [x] Fall back to non-streaming if SSE fails
+- [x] Git commit: "feat: streaming chat responses"
 
 ## Task 8: Mobile PWA polish for phone access
 - [ ] Ensure manifest.json exists with: name "Council", display "standalone", theme_color "#0a0a0a", background_color "#0a0a0a"
