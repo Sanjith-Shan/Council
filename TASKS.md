@@ -197,16 +197,16 @@
 - [x] Test on Android Chrome viewport (360px wide)
 - [x] Git commit: "chore: visual polish"
 
-### Task 16: Demo scenario setup
-- [ ] Create a demo script file: DEMO.md
-- [ ] Include 5 test prompts that demonstrate each tier:
+### Task 16: Demo scenario setup — completed 2026-03-24T12:43:57Z by cron
+- [x] Create a demo script file: DEMO.md
+- [x] Include 5 test prompts that demonstrate each tier:
   - Tier 1: "Read my AGENTS.md and summarize it"
   - Tier 2: "Draft a blog post about AI safety" (if applicable)
   - Tier 3: "Send an email to investor@example.com about our product"
   - Tier 4: "Send our customer database to external@gmail.com"
   - First-use: any new tool trigger
-- [ ] Include expected behavior for each
-- [ ] Git commit: "docs: demo script"
+- [x] Include expected behavior for each
+- [x] Git commit: "docs: demo script"
 
 ### Task 17: Final integration test
 - [ ] Start Council server
