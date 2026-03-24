@@ -126,6 +126,7 @@ button, input { font-family: inherit; }
 .save-btn { width: 100%; min-height: 44px; border: none; border-radius: var(--radius-btn); background: var(--accent); color: #fff; font-weight: 600; margin-top: 8px; }
 .loading { display: inline-block; width: 14px; height: 14px; border: 2px solid #5f5f5f; border-top-color: var(--accent); border-radius: 50%; animation: spin .7s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
+.typing-dots{display:inline-flex;gap:4px;align-items:center} .typing-dots span{opacity:0;color:var(--text-muted);font-weight:700;animation:dot 1s infinite;} .typing-dots span:nth-child(1){animation-delay:0s} .typing-dots span:nth-child(2){animation-delay:0.15s} .typing-dots span:nth-child(3){animation-delay:0.3s} @keyframes dot{0%{opacity:0}50%{opacity:1}100%{opacity:0}}
 </style>
 </head>
 <body>
@@ -153,7 +154,35 @@ button, input { font-family: inherit; }
 <script>
 if ('serviceWorker' in navigator) { window.addEventListener('load', () => navigator.serviceWorker.register('/static/sw.js').catch(() => {})); }
 function switchTab(tab) { document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === tab)); document.querySelectorAll('.panel').forEach(p => p.classList.toggle('active', p.id === `panel-${tab}`)); if (tab === 'approvals') loadApprovals(); if (tab === 'activity') loadActivity(); if (tab === 'insights') loadInsights(); }
-async function sendMessage() { const input = document.getElementById('chat-input'); const msg = input.value.trim(); if (!msg) return; input.value = ''; addChatMsg('user', msg); document.getElementById('send-btn').disabled = true; addChatMsg('system', '<span class="loading"></span> Agent is thinking...'); try { const res = await fetch('/api/chat', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ message: msg }) }); const msgs = document.getElementById('chat-messages'); const lastSystem = msgs.querySelector('.msg.system:last-child'); if (lastSystem && lastSystem.innerHTML.includes('loading')) lastSystem.remove(); if (!res.ok) { const err = await res.json(); addChatMsg('system', `Error: ${err.detail || 'Unknown error'}`); return; } const data = await res.json(); if (data.agent_text) addChatMsg('agent', data.agent_text); if (data.actions?.length) { let html = ''; for (const a of data.actions) { html += `<div class="action-card ${getTierClass(a.tier)}"><div class="tier-label">${getTierLabel(a.tier)}${a.first_use_escalated ? ' (first use)' : ''}</div><div>${escapeHtml(a.description)}</div>`; if (a.council) { html += `<div class="council-votes">`; for (const v of a.council.votes) html += `<span class="vote-chip ${v.verdict}" title="${escapeHtml(v.reason)}">${v.checker}: ${v.verdict}</span>`; html += `<span style="font-size:10px;color:var(--text-muted)">${a.council.total_latency_ms}ms</span></div>`; } html += `</div>`; } addChatMsg('agent', html, true); } await updateApprovalBadge(); } catch (e) { const msgs = document.getElementById('chat-messages'); const lastSystem = msgs.querySelector('.msg.system:last-child'); if (lastSystem && lastSystem.innerHTML.includes('loading')) lastSystem.remove(); addChatMsg('system', `Error: ${e.message}`); } finally { document.getElementById('send-btn').disabled = false; document.getElementById('chat-input').focus(); } }
+async function sendMessage() { const input = document.getElementById('chat-input'); const msg = input.value.trim(); if (!msg) return; input.value = ''; addChatMsg('user', msg); document.getElementById('send-btn').disabled = true; addChatMsg('system', '<span class="typing-dots"><span>.</span><span>.</span><span>.</span></span> Agent is thinking...'); try { const res = await fetch('/api/chat', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ message: msg }) }); const msgs = document.getElementById('chat-messages'); const lastSystem = msgs.querySelector('.msg.system:last-child'); if (lastSystem && (lastSystem.innerHTML.includes('loading') || lastSystem.innerHTML.includes('typing-dots'))) lastSystem.remove(); if (!res.ok) { const err = await res.json(); addChatMsg('system', `Error: ${err.detail || 'Unknown error'}`); return; } const data = await res.json(); if (data.agent_text) addChatMsg('agent', data.agent_text); if (data.actions?.length) {
+      let html = '';
+      for (const a of data.actions) {
+        const tierClass = getTierClass(a.tier);
+        const tierLabel = getTierLabel(a.tier);
+        html += `<div class="action-card ${tierClass}" data-action-id="${a.id}">`;
+        html += `<div class="tier-label">${tierLabel}${a.first_use_escalated ? ' (first use)' : ''}</div>`;
+        html += `<div>${escapeHtml(a.description)}</div>`;
+        // Collapsible verdicts
+        if (a.council) {
+          html += `<button class="show-votes" onclick="(function(btn){const card=btn.closest('.action-card');const d=card.querySelector('.council-details'); if(!d){return;} if(d.style.display==='none'){d.style.display='block'; btn.textContent='Hide verdicts'}else{d.style.display='none'; btn.textContent='Show verdicts'}})(this)">Show verdicts</button>`;
+          html += `<div class="council-details" style="display:none;margin-top:6px;font-size:12px;color:var(--text-muted)">`;
+          for (const v of a.council.votes) {
+            html += `<div><span class="vote-chip ${v.verdict}" style="margin-right:8px">${v.checker}: ${v.verdict}</span><span>${escapeHtml(v.reason)}</span></div>`;
+          }
+          html += `<div style="font-size:10px;color:var(--text-muted);margin-top:6px">${a.council.total_latency_ms}ms</div>`;
+          html += `</div>`;
+        }
+        // Inline approve/reject for pending
+        if (a.status === 'pending_approval') {
+          html += `<div style="margin-top:8px;display:flex;gap:8px"><button class="btn-approve" onclick="handleApproval('${a.id}', true)">✓ Approve</button><button class="btn-reject" onclick="handleApproval('${a.id}', false)">✕ Reject</button></div>`;
+        }
+        if (a.execution_result) {
+          html += `<div style="margin-top:6px;color:var(--text-muted);font-size:12px">${escapeHtml(a.execution_result)}</div>`;
+        }
+        html += `</div>`;
+      }
+      addChatMsg('agent', html, true);
+    }await updateApprovalBadge(); } catch (e) { const msgs = document.getElementById('chat-messages'); const lastSystem = msgs.querySelector('.msg.system:last-child'); if (lastSystem && (lastSystem.innerHTML.includes('loading') || lastSystem.innerHTML.includes('typing-dots'))) lastSystem.remove(); addChatMsg('system', `Error: ${e.message}`); } finally { document.getElementById('send-btn').disabled = false; document.getElementById('chat-input').focus(); } }
 function addChatMsg(role, content, isHtml = false) { const msgs = document.getElementById('chat-messages'); const div = document.createElement('div'); div.className = `msg ${role}`; div.innerHTML = isHtml ? content : `<pre>${escapeHtml(content)}</pre>`; msgs.appendChild(div); msgs.scrollTop = msgs.scrollHeight; }
 async function loadApprovals() { const res = await fetch('/api/approvals'); const data = await res.json(); const list = document.getElementById('approval-list'); if (!data.pending?.length) { list.innerHTML = '<div class="empty">All clear — no actions pending</div>'; return; } list.innerHTML = data.pending.map(a => `<div class="approval-item" id="approval-${a.id}"><h3>${escapeHtml(a.description)}</h3><div class="meta">Tool: ${a.tool_name} · ${new Date(a.timestamp).toLocaleTimeString()}</div><div class="approval-btns"><button class="btn-approve" onclick="handleApproval('${a.id}', true)">Approve</button><button class="btn-reject" onclick="handleApproval('${a.id}', false)">Reject</button></div></div>`).join(''); }
 async function handleApproval(actionId, approved) { await fetch('/api/approve', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action_id: actionId, approved }) }); await loadApprovals(); await updateApprovalBadge(); }
