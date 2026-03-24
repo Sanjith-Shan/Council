@@ -50,7 +50,7 @@ class ProposedAction(BaseModel):
     id: str = Field(default_factory=lambda: uuid.uuid4().hex[:12])
     tool_name: str
     description: str
-    parameters: dict = {}
+    parameters: dict = Field(default_factory=dict)
     reasoning: str = ""
     timestamp: datetime = Field(default_factory=datetime.utcnow)
 
@@ -74,7 +74,7 @@ class RiskProfile(BaseModel):
     communication_autonomy: str = "moderate"   # conservative, moderate, aggressive
     transparency: str = "moderate"             # high, moderate, low
     novelty_tolerance: str = "conservative"    # conservative, moderate, aggressive
-    raw_answers: dict = {}
+    raw_answers: dict = Field(default_factory=dict)
 
 
 # ---------- Events (Activity Feed) ----------
@@ -84,7 +84,7 @@ class ActivityEvent(BaseModel):
     event_type: str  # "action_proposed", "council_evaluated", "tier_assigned", "approved", "rejected", "executed", "blocked", "message_sent", "message_received"
     action_id: Optional[str] = None
     summary: str
-    details: dict = {}
+    details: dict = Field(default_factory=dict)
     tier: Optional[Tier] = None
     timestamp: datetime = Field(default_factory=datetime.utcnow)
 

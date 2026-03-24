@@ -169,18 +169,18 @@
 - [x] Request notification permission during onboarding
 - [x] Git commit: "feat: browser push notifications for approvals"
 
-### Task 14: Code cleanup and documentation
-- [ ] Clean up all files: remove dead code, unused imports
-- [ ] Add docstrings to any functions missing them
-- [ ] Update README.md with:
+### Task 14: Code cleanup and documentation — completed 2026-03-24T12:07:21Z by cron
+- [x] Clean up all files: remove dead code, unused imports
+- [x] Add docstrings to any functions missing them
+- [x] Update README.md with:
   - New name "Council"
   - Updated architecture diagram
   - Mobile app screenshots section (placeholder)
   - "How it works" section with the flow diagram
   - Installation instructions updated
-- [ ] Update integration/SETUP.md with current instructions
-- [ ] Ensure all API endpoints are documented
-- [ ] Git commit: "chore: code cleanup and documentation"
+- [x] Update integration/SETUP.md with current instructions
+- [x] Ensure all API endpoints are documented
+- [x] Git commit: "chore: code cleanup and documentation"
 
 ---
 

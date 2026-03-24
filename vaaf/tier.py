@@ -14,7 +14,7 @@ from vaaf.models import (
     ProposedAction, EvaluatedAction, CouncilResult,
     Tier, ActionStatus, RiskProfile,
 )
-from vaaf.command_analyzer import is_exec_safe, classify_command, extract_base_command
+from vaaf.command_analyzer import is_exec_safe, extract_base_command
 
 # Tools that NEVER interact with the outside world -> Tier 1 (auto)
 TRIVIALLY_SAFE_TOOLS = {

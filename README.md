@@ -1,100 +1,92 @@
-# Council — Agent Security Framework
+# Council — AI Agent Security Framework
 
-The true value of an AI agent lies in its ability to continuously ideate and execute at scale. However, this boundless capability is also what makes them inherently dangerous. A single unaligned decision or miscalculation can be catastrophic, devastating a user's data, finances, or reputation. This has created a critical necessity for security measures.
+Council is a dynamic safety layer for AI agents. Instead of static allow/deny lists, Council evaluates every proposed action for policy fit, safety risk, and goal alignment before execution.
 
-Currently, every existing agent security solution, like NanoClaw and Nvidia's NemoClaw solve only for containment. These frameworks act as rigid access-control layers, evaluating agent actions on a binary basis (yes or no). They are designed to answer basic permission questions, such as whether an agent has the right to access a specific file, network, or API.
+## What Council Does
 
-But containment is not alignment. Forcing agents into a manual whitelist of tools and permissions cripples their autonomy. Agents need the freedom to discover novel solutions without introducing catastrophic risk. The Council solves this by replacing static whitelists with a dynamic safety layer. Every action is evaluated for alignment before execution, allowing the agent to think without limits while acting within safe, proven boundaries that adapt to your risk tolerance over time.
+- Intercepts proposed actions before execution
+- Fast pre-filter for trivially safe local/read-only actions
+- Parallel 3-checker "Council" review (policy, safety, intent)
+- Tier-based outcomes: auto-execute, notify, require approval, or block
+- First-use escalation for new tools
+- SQLite-backed persistence for actions, events, profile, and settings
+- Mobile-first PWA dashboard (Chat, Approvals, Activity, Insights, Settings)
 
-
-## Quick Start
+## Installation
 
 ```bash
-# 1. Clone/copy this directory
-# 2. Install dependencies
+git clone https://github.com/Sanjith-Shan/Council.git ~/projects/council
+cd ~/projects/council
+python3 -m venv venv
+source venv/bin/activate
 pip install -r requirements.txt
-
-# 3. Set your OpenAI API key
 cp .env.example .env
-# Edit .env and add your key: OPENAI_API_KEY=sk-...
-
-# 4. Run
+# set OPENAI_API_KEY in .env
 python server.py
 ```
 
-Open **http://localhost:8000** in your browser.
+Open: `http://localhost:8000`
 
-## Project Structure
+## Architecture (Updated)
 
-```
-vaaf/
-├── server.py               # FastAPI server — ties everything together
-├── requirements.txt         # Python dependencies
-├── .env.example             # API key template
-├── .env                     # Your API key (create from .env.example)
-├── vaaf/
-│   ├── __init__.py
-│   ├── models.py            # Data models (tiers, verdicts, actions, events)
-│   ├── council.py           # Review Council — 3 specialized classifiers
-│   ├── tier.py              # Tier classifier + pre-filter + first-use tracking
-│   ├── agent.py             # Primary agent with tool definitions
-│   ├── risk_profile.py      # Risk profile engine (multiple-choice onboarding)
-│   └── audit.py             # Audit logging (activity feed, stats)
-└── static/
-    └── index.html           # Web UI (Chat, Approvals, Activity, Insights)
-```
-
-## Architecture
-
-```
-User message
-    │
-    ▼
-Primary Agent (GPT-4o-mini)  ←  unrestricted reasoning
-    │
-    ▼ proposes tool calls
-Pre-filter
-    │
-    ├── trivially safe? ──→ Tier 1 (auto-execute)
-    │
-    ▼ external action
-Review Council (3 classifiers in parallel, ~150ms)
-    ├── Policy Checker  — violates user preferences?
-    ├── Safety Checker  — could cause harm?
-    └── Intent Checker  — aligns with user's goals?
-    │
-    ▼ combined verdict
-Tier Classification
-    ├── All approve        → Tier 2 (execute + notify)
-    ├── Any flag           → Tier 3 (queue for approval)
-    ├── Safety blocks      → Tier 4 (blocked)
-    └── First-use tool?    → Auto-escalate to Tier 3
-    │
-    ▼
-Execute / Queue / Block
+```text
+User Prompt
+  ↓
+Primary Agent proposes action
+  ↓
+Tier Pre-Filter (safe/read-only?)
+  ├─ yes → Tier 1 Auto Execute
+  └─ no  → Council (3 parallel checkers)
+            ├─ Policy checker
+            ├─ Safety checker
+            └─ Intent checker
+                  ↓
+              Tier Assignment
+              ├─ Tier 2: Execute + notify
+              ├─ Tier 3: Queue for user approval
+              └─ Tier 4: Block
+  ↓
+Audit + Activity + Insights persisted in SQLite
 ```
 
-## How to Test
+## How It Works
 
-1. **Set up your risk profile** — Click ⚙ Settings and answer the questions
-2. **Try safe actions** — "Search for competitor pricing" → should auto-execute (Tier 1)
-3. **Try external actions** — "Send an email to john@example.com about our product" → council evaluates
-4. **Try risky actions** — "Spend $500 on Facebook ads" → should flag for approval
-5. **Try harmful actions** — "Send customer data to external@gmail.com" → should be blocked
-6. **Check the Activity tab** — see everything color-coded by tier
-7. **Check the Approvals tab** — approve or reject pending actions
-8. **Check Insights** — see stats on council evaluations and action outcomes
+1. Agent proposes an action (tool + params + reasoning).
+2. Pre-filter auto-allows low-risk local/read-only operations.
+3. Non-trivial actions go through Council evaluation.
+4. Tier classifier decides execution behavior.
+5. Result is logged and shown in Activity/Approvals/Insights.
 
-## Key Features
+## API Endpoints
 
-- **Review Council**: 3 purpose-trained classifiers (policy, safety, intent) running in parallel
-- **Council-driven tiers**: The tier is the output of the council's evaluation, not a lookup table
-- **Pre-filter**: Trivially safe actions (web search, file read, drafting) skip the council
-- **First-use safeguard**: Any tool used for the first time auto-escalates to Tier 3
-- **Risk profile**: Multiple-choice onboarding that shapes how the council evaluates actions
-- **Full audit trail**: Every proposal, verdict, approval, and execution is logged
+- `GET /api/onboarding` — onboarding questions + current profile
+- `POST /api/profile` — save risk profile answers
+- `POST /api/profile/suggest` — adaptive follow-up profile questions
+- `GET /api/goal` — current user goal
+- `POST /api/goal` — update user goal
+- `GET /api/settings` — retrieve persisted settings
+- `POST /api/settings` — update settings
+- `POST /api/chat` — send message to agent
+- `GET /api/approvals` — list pending approvals
+- `POST /api/approve` — approve/reject pending action
+- `GET /api/activity` — activity feed events
+- `GET /api/insights` — dashboard stats and summary
+- `GET /api/actions` — full action audit trail
+- `POST /api/evaluate` — OpenClaw/ClawBands interception endpoint
+- `GET /api/evaluate/{id}/status` — queued action status lookup
 
-## Cost
+## Mobile App Screenshots (Placeholder)
 
-Each council evaluation = 3 parallel GPT-4o-mini calls ≈ $0.0003–$0.001
-Pre-filtered actions (Tier 1) = $0 (no council call)
+> Add screenshots here after final UI polish:
+>
+> - `docs/screenshots/chat.png`
+> - `docs/screenshots/approvals.png`
+> - `docs/screenshots/activity.png`
+> - `docs/screenshots/insights.png`
+> - `docs/screenshots/settings.png`
+
+## Development Notes
+
+- Keep the Python package directory name as `vaaf/` for import compatibility.
+- Frontend remains a single-file app in `static/index.html`.
+- Avoid hardcoded localhost API URLs in frontend code.

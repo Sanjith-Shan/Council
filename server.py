@@ -6,8 +6,6 @@ and serves the web UI. Run with: python server.py
 """
 
 import os
-import json
-from datetime import datetime
 from contextlib import asynccontextmanager
 
 from dotenv import load_dotenv
@@ -171,6 +169,7 @@ class EvaluateRequest(BaseModel):
 
 @app.get("/")
 async def root():
+    """Serve the single-page web application."""
     return FileResponse("static/index.html")
 
 
@@ -223,6 +222,7 @@ async def update_goal(req: GoalUpdate):
 
 @app.get("/api/goal")
 async def get_goal():
+    """Return the current persisted user goal."""
     return {"goal": user_goal}
 
 
