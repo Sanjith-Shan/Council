@@ -110,15 +110,15 @@
 - [x] Git commit: "feat: streaming chat responses"
 
 ## Task 8: Mobile PWA polish for phone access
-- [ ] Ensure manifest.json exists with: name "Council", display "standalone", theme_color "#0a0a0a", background_color "#0a0a0a"
-- [ ] Ensure apple-mobile-web-app-capable and apple-mobile-web-app-status-bar-style meta tags are set
-- [ ] Bottom nav bar must be fixed at the bottom with safe-area padding: `padding-bottom: env(safe-area-inset-bottom)`
-- [ ] Chat input must sit above the bottom nav and above the mobile keyboard when focused
-- [ ] Test: the app must be fully usable at 375px viewport width (iPhone SE)
-- [ ] No horizontal scrolling anywhere
-- [ ] Touch targets (buttons, tabs) must be at least 44px tall
-- [ ] Add viewport meta tag: `<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">`
-- [ ] Git commit: "feat: mobile PWA polish"
+- [x] Ensure manifest.json exists with: name "Council", display "standalone", theme_color "#0a0a0a", background_color "#0a0a0a"
+- [x] Ensure apple-mobile-web-app-capable and apple-mobile-web-app-status-bar-style meta tags are set
+- [x] Bottom nav bar must be fixed at the bottom with safe-area padding: `padding-bottom: env(safe-area-inset-bottom)`
+- [x] Chat input must sit above the bottom nav and above the mobile keyboard when focused
+- [x] Test: the app must be fully usable at 375px viewport width (iPhone SE)
+- [x] No horizontal scrolling anywhere
+- [x] Touch targets (buttons, tabs) must be at least 44px tall
+- [x] Add viewport meta tag: `<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">`
+- [x] Git commit: "feat: mobile PWA polish"
 
 ## Task 9: Add ngrok/tunnel deployment helper
 - [ ] Create a file `start.sh` that starts everything needed:
