@@ -85,6 +85,43 @@ Audit + Activity + Insights persisted in SQLite
 > - `docs/screenshots/insights.png`
 > - `docs/screenshots/settings.png`
 
+## Connect Council to OpenClaw Gateway
+
+1. Copy env template and set your keys:
+
+```bash
+cp .env.example .env
+```
+
+2. In `.env`, set:
+
+```env
+OPENAI_API_KEY=your-openai-key
+OPENCLAW_GATEWAY_TOKEN=your-openclaw-gateway-token
+# Optional override (default shown)
+OPENCLAW_GATEWAY_URL=http://127.0.0.1:18789
+```
+
+3. Start Council and confirm gateway mode:
+
+```bash
+source venv/bin/activate
+python server.py
+# or: ./start.sh
+```
+
+4. Verify status:
+
+```bash
+curl http://127.0.0.1:8001/api/gateway/status
+```
+
+Expected when connected:
+- `"connected": true`
+- `"mode": "openclaw"`
+
+If token is missing/unreachable, Council automatically falls back to standalone mode.
+
 ## Deployment with ngrok (Phone Access)
 
 Use the helper script to run Council on port `8001` and keep logs in your terminal:
@@ -106,6 +143,13 @@ Tips:
 - Keep both the Council terminal and ngrok terminal running.
 - If the ngrok URL changes, re-open the new URL from your phone.
 - Stop Council with `Ctrl+C` in the `./start.sh` terminal.
+
+## Add to Phone Home Screen
+
+- **iPhone (Safari):** Share → **Add to Home Screen** → Add
+- **Android (Chrome):** 3-dot menu → **Add to Home screen** (or **Install app**) → Add
+
+After adding, launch Council from the icon for a standalone PWA-style experience.
 
 ## Development Notes
 
