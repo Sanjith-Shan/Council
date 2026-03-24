@@ -9,7 +9,7 @@
 ---
 
 ## Task 1: Add OpenClaw gateway client module
-- [ ] Create the file `vaaf/openclaw_client.py` with the following content:
+- [x] Create the file `vaaf/openclaw_client.py` with the following content:
   - A class `OpenClawClient` that connects to OpenClaw's gateway
   - It uses `httpx.AsyncClient` to POST to `http://127.0.0.1:18789/v1/chat/completions`
   - Constructor takes `gateway_url` (default from env `OPENCLAW_GATEWAY_URL` or `http://127.0.0.1:18789`) and `gateway_token` (from env `OPENCLAW_GATEWAY_TOKEN`)
@@ -20,9 +20,9 @@
     - Returns `{"text": "", "error": "description"}` on failure (connection error, auth error, etc)
   - Method `check_health() -> dict` that GETs `/health` and returns `{"connected": bool, "error": str|None}`
   - Property `is_configured -> bool` that returns True if gateway_token is set
-- [ ] Run: `pip install httpx` and add `httpx` to requirements.txt
-- [ ] Test: `python -c "from vaaf.openclaw_client import OpenClawClient; print('OK')"`
-- [ ] Git commit: "feat: add OpenClaw gateway client"
+- [x] Run: `pip install httpx` and add `httpx` to requirements.txt
+- [x] Test: `python -c "from vaaf.openclaw_client import OpenClawClient; print('OK')"`
+- [x] Git commit: "feat: add OpenClaw gateway client"
 
 ## Task 2: Integrate gateway client into server.py
 - [ ] In server.py, add import: `from vaaf.openclaw_client import OpenClawClient`
