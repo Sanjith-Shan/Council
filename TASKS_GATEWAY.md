@@ -87,17 +87,17 @@
 - [x] Git commit: "feat: show gateway connection status in UI"
 
 ## Task 6: Improve chat to show OpenClaw's tool usage
-- [ ] When OpenClaw responds, its text often contains tool usage info (like "[used tool: exec]" or similar markers)
-- [ ] Parse the agent response text for any tool/action references
-- [ ] If the Council security patch is active, actions also appear in the Activity tab via /api/evaluate
-- [ ] Add a small info banner in chat when connected: "Messages are sent to your OpenClaw agent. Actions are monitored by Council."
-- [ ] Make sure long responses render properly (handle markdown-like formatting: bold, code blocks, lists)
-- [ ] Add basic markdown rendering for agent responses:
+- [x] When OpenClaw responds, its text often contains tool usage info (like "[used tool: exec]" or similar markers)
+- [x] Parse the agent response text for any tool/action references
+- [x] If the Council security patch is active, actions also appear in the Activity tab via /api/evaluate
+- [x] Add a small info banner in chat when connected: "Messages are sent to your OpenClaw agent. Actions are monitored by Council."
+- [x] Make sure long responses render properly (handle markdown-like formatting: bold, code blocks, lists)
+- [x] Add basic markdown rendering for agent responses:
   - **bold** text
   - `code` inline
   - ```code blocks```
   - Line breaks preserved
-- [ ] Git commit: "feat: improved chat rendering for OpenClaw responses"
+- [x] Git commit: "feat: improved chat rendering for OpenClaw responses"
 
 ## Task 7: Add streaming support for OpenClaw responses
 - [ ] Add a new endpoint `POST /api/chat/stream` that uses SSE (Server-Sent Events)
