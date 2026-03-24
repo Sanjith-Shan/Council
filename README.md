@@ -85,6 +85,28 @@ Audit + Activity + Insights persisted in SQLite
 > - `docs/screenshots/insights.png`
 > - `docs/screenshots/settings.png`
 
+## Deployment with ngrok (Phone Access)
+
+Use the helper script to run Council on port `8001` and keep logs in your terminal:
+
+```bash
+cd ~/projects/council
+./start.sh
+```
+
+In another terminal, expose it publicly:
+
+```bash
+ngrok http 8001
+```
+
+Open the HTTPS ngrok URL on your phone, then use browser menu → **Add to Home Screen**.
+
+Tips:
+- Keep both the Council terminal and ngrok terminal running.
+- If the ngrok URL changes, re-open the new URL from your phone.
+- Stop Council with `Ctrl+C` in the `./start.sh` terminal.
+
 ## Development Notes
 
 - Keep the Python package directory name as `vaaf/` for import compatibility.

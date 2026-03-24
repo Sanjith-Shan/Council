@@ -121,7 +121,7 @@
 - [x] Git commit: "feat: mobile PWA polish"
 
 ## Task 9: Add ngrok/tunnel deployment helper
-- [ ] Create a file `start.sh` that starts everything needed:
+- [x] Create a file `start.sh` that starts everything needed:
   ```bash
   #!/bin/bash
   echo "Starting Council..."
@@ -141,9 +141,9 @@
   echo "Press Ctrl+C to stop"
   wait $SERVER_PID
   ```
-- [ ] Make it executable: `chmod +x start.sh`
-- [ ] Update README with deployment instructions for ngrok
-- [ ] Git commit: "feat: start script and deployment docs"
+- [x] Make it executable: `chmod +x start.sh`
+- [x] Update README with deployment instructions for ngrok
+- [x] Git commit: "feat: start script and deployment docs"
 
 ## Task 10: End-to-end test and cleanup
 - [ ] Start Council server with `./start.sh`
