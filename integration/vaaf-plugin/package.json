@@ -1,0 +1,7 @@
+{
+  "name": "vaaf-openclaw-plugin",
+  "version": "1.0.0",
+  "description": "VAAF integration plugin for OpenClaw — intercepts all tool calls and routes them through the Review Council",
+  "main": "index.js",
+  "type": "module"
+}

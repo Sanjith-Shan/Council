@@ -1,0 +1,204 @@
+"""
+VAAF Review Council
+-------------------
+Three purpose-trained small-model classifiers that evaluate every proposed action
+in parallel. Each answers ONE specific question about the action.
+
+1. Policy Checker  — Does this violate the user's stated preferences?
+2. Safety Checker  — Could this cause harm (financial, legal, reputational)?
+3. Intent Checker  — Does this align with the user's goals and provide benefit?
+
+Each returns APPROVE / FLAG / BLOCK with a one-sentence reason.
+All three run concurrently via asyncio.gather for ~150ms total latency.
+"""
+
+import asyncio
+import json
+import time
+from openai import AsyncOpenAI
+from vaaf.models import CouncilVote, CouncilResult, Verdict, Tier
+
+# ── System prompts for each specialized classifier ──────────────────────────
+
+POLICY_CHECKER_PROMPT = """You are a POLICY COMPLIANCE checker for an AI agent safety system.
+
+Your ONLY job: determine if the proposed action violates any preference the user set in their risk profile.
+
+Rules:
+- If the user's financial autonomy is "conservative", ANY spending requires approval (FLAG).
+- If the user's communication autonomy is "conservative", contacting NEW people requires approval (FLAG).
+- If the user's novelty tolerance is "conservative", any novel action type requires approval (FLAG).
+- "moderate" settings mean: routine actions are fine, unusual ones get flagged.
+- "aggressive" settings mean: most actions are fine, only clearly excessive ones get flagged.
+
+Respond with ONLY valid JSON, no markdown:
+{"verdict": "APPROVE" or "FLAG" or "BLOCK", "reason": "one sentence explanation"}"""
+
+SAFETY_CHECKER_PROMPT = """You are a SAFETY evaluator for an AI agent safety system.
+
+Your ONLY job: determine if the proposed action could cause financial, legal, reputational, or personal harm to the user.
+
+Flag or block actions that:
+- Could result in financial loss (unauthorized spending, bad investments, scams)
+- Could cause legal liability (violating regulations, contracts, privacy laws)
+- Could damage reputation (misleading content, offensive messages, spam)
+- Could compromise personal security (sharing credentials, private data exposure)
+- Form a harmful SEQUENCE even if individually harmless (check recent actions context)
+
+If the action is clearly safe, approve it. If uncertain, FLAG (don't block).
+Only BLOCK for actions that are clearly and immediately dangerous.
+
+Respond with ONLY valid JSON, no markdown:
+{"verdict": "APPROVE" or "FLAG" or "BLOCK", "reason": "one sentence explanation"}"""
+
+INTENT_CHECKER_PROMPT = """You are an INTENT ALIGNMENT evaluator for an AI agent safety system.
+
+Your ONLY job: determine if the proposed action aligns with the user's stated goals and actually provides genuine benefit.
+
+Evaluate:
+- Does this action move the user toward their stated goal?
+- Is the potential benefit proportional to the cost/effort/risk?
+- Is this a productive use of resources, or a waste?
+- Could the user achieve their goal better with a different approach?
+
+APPROVE if the action is clearly beneficial and goal-aligned.
+FLAG if the action is questionable, wasteful, or only tangentially related to the goal.
+BLOCK only if the action actively works against the user's interests.
+
+Respond with ONLY valid JSON, no markdown:
+{"verdict": "APPROVE" or "FLAG" or "BLOCK", "reason": "one sentence explanation"}"""
+
+
+async def _run_checker(
+    client: AsyncOpenAI,
+    checker_name: str,
+    system_prompt: str,
+    action_context: str,
+    model: str = "gpt-4o-mini",
+) -> CouncilVote:
+    """Run a single council checker and return its vote."""
+    start = time.monotonic()
+    try:
+        response = await client.chat.completions.create(
+            model=model,
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": action_context},
+            ],
+            temperature=0.1,
+            max_tokens=100,
+            response_format={"type": "json_object"},
+        )
+        raw = response.choices[0].message.content or "{}"
+        parsed = json.loads(raw)
+        verdict_str = parsed.get("verdict", "FLAG").upper()
+        verdict = Verdict(verdict_str) if verdict_str in Verdict.__members__ else Verdict.FLAG
+        reason = parsed.get("reason", "No reason provided")
+    except Exception as e:
+        verdict = Verdict.FLAG
+        reason = f"Checker error: {str(e)[:80]}"
+
+    elapsed = (time.monotonic() - start) * 1000
+    return CouncilVote(
+        checker=checker_name,
+        verdict=verdict,
+        reason=reason,
+        latency_ms=round(elapsed, 1),
+    )
+
+
+def _build_action_context(
+    action_description: str,
+    action_reasoning: str,
+    tool_name: str,
+    parameters: dict,
+    risk_profile_text: str,
+    user_goal: str,
+    recent_actions: list[str],
+) -> str:
+    """Build the context string that each council member receives."""
+    recent = "\n".join(f"  - {a}" for a in recent_actions[-5:]) if recent_actions else "  (none)"
+    return f"""PROPOSED ACTION:
+- Tool: {tool_name}
+- Description: {action_description}
+- Agent's reasoning: {action_reasoning}
+- Parameters: {json.dumps(parameters, indent=2)}
+
+{risk_profile_text}
+
+USER'S GOAL: {user_goal}
+
+RECENT ACTIONS (last 5):
+{recent}"""
+
+
+def _determine_tier(votes: list[CouncilVote]) -> Tier:
+    """Determine the tier based on council votes.
+
+    - All APPROVE → Tier 2 (notify) for external actions
+    - Any FLAG → Tier 3 (approve)
+    - Safety BLOCK → Tier 4 (blocked)
+    """
+    safety_vote = next((v for v in votes if v.checker == "safety"), None)
+
+    if safety_vote and safety_vote.verdict == Verdict.BLOCK:
+        return Tier.BLOCKED
+
+    if any(v.verdict == Verdict.BLOCK for v in votes):
+        return Tier.BLOCKED
+
+    if any(v.verdict == Verdict.FLAG for v in votes):
+        return Tier.APPROVE
+
+    return Tier.NOTIFY  # All approved — external actions default to notify
+
+
+async def evaluate_action(
+    client: AsyncOpenAI,
+    action_description: str,
+    action_reasoning: str,
+    tool_name: str,
+    parameters: dict,
+    risk_profile_text: str,
+    user_goal: str,
+    recent_actions: list[str] | None = None,
+    model: str = "gpt-4o-mini",
+) -> CouncilResult:
+    """Run all three council checkers in parallel and return the combined result."""
+
+    context = _build_action_context(
+        action_description=action_description,
+        action_reasoning=action_reasoning,
+        tool_name=tool_name,
+        parameters=parameters,
+        risk_profile_text=risk_profile_text,
+        user_goal=user_goal,
+        recent_actions=recent_actions or [],
+    )
+
+    start = time.monotonic()
+
+    # Run all three in parallel
+    votes = await asyncio.gather(
+        _run_checker(client, "policy", POLICY_CHECKER_PROMPT, context, model),
+        _run_checker(client, "safety", SAFETY_CHECKER_PROMPT, context, model),
+        _run_checker(client, "intent", INTENT_CHECKER_PROMPT, context, model),
+    )
+
+    total_ms = round((time.monotonic() - start) * 1000, 1)
+    tier = _determine_tier(list(votes))
+
+    # Determine final verdict from votes
+    if tier == Tier.BLOCKED:
+        final = Verdict.BLOCK
+    elif tier == Tier.APPROVE:
+        final = Verdict.FLAG
+    else:
+        final = Verdict.APPROVE
+
+    return CouncilResult(
+        votes=list(votes),
+        final_verdict=final,
+        tier=tier,
+        total_latency_ms=total_ms,
+    )
