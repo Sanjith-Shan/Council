@@ -1,9 +1,9 @@
 """
-VAAF Primary Agent
+Council Primary Agent
 ------------------
 The main LLM agent that reasons freely and proposes actions.
 Uses OpenAI function calling to propose tool invocations.
-Each proposed tool call is intercepted by VAAF before execution.
+Each proposed tool call is intercepted by Council before execution.
 """
 
 import json

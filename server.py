@@ -1,5 +1,5 @@
 """
-VAAF Server
+Council Server
 -----------
 FastAPI server that orchestrates the agent, council, tier classifier,
 and serves the web UI. Run with: python server.py
@@ -53,11 +53,11 @@ async def lifespan(app: FastAPI):
     else:
         client = AsyncOpenAI(api_key=api_key)
         print("✓ OpenAI client initialized")
-    print("✓ VAAF server ready at http://localhost:8000\n")
+    print("✓ Council server ready at http://localhost:8000\n")
     yield
 
 
-app = FastAPI(title="VAAF", lifespan=lifespan)
+app = FastAPI(title="Council", lifespan=lifespan)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -132,7 +132,7 @@ async def get_goal():
 @app.post("/api/chat")
 async def chat(req: ChatRequest):
     """Send a message to the agent. The agent reasons and proposes actions,
-    which are intercepted by VAAF before execution."""
+    which are intercepted by Council before execution."""
     global chat_history
 
     if not client:
@@ -155,7 +155,7 @@ async def chat(req: ChatRequest):
     agent_text = msg.content or ""
     proposed_actions = extract_proposed_actions(response)
 
-    # Process each proposed action through VAAF pipeline
+    # Process each proposed action through Council pipeline
     evaluated_actions = []
     for action in proposed_actions:
         evaluated = await _process_action(action)
@@ -195,7 +195,7 @@ async def chat(req: ChatRequest):
 
 
 async def _process_action(action: ProposedAction):
-    """Run an action through the full VAAF pipeline."""
+    """Run an action through the full Council pipeline."""
 
     # Step 1: Pre-filter check
     pre_tier = tier_classifier.pre_filter(action)
@@ -308,7 +308,7 @@ async def evaluate_external_action(req: EvaluateRequest):
         reasoning=req.context,
     )
 
-    # Run through the full VAAF pipeline
+    # Run through the full Council pipeline
     evaluated = await _process_action(action)
 
     # Map status to a simple decision for the caller

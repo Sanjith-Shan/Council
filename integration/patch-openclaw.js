@@ -1,16 +1,16 @@
 #!/usr/bin/env node
 
 /**
- * VAAF Source Patch for OpenClaw
+ * Council Source Patch for OpenClaw
  * ==============================
  * This script patches OpenClaw's tool execution pipeline to call the
- * VAAF server before every tool execution. This is the most reliable
+ * Council server before every tool execution. This is the most reliable
  * integration method for demos.
  *
  * What it does:
  *   1. Finds OpenClaw's installation directory
  *   2. Locates the tool execution file (pi-tool-definition-adapter or attempt)
- *   3. Injects a VAAF interceptor call before tool.execute()
+ *   3. Injects a Council interceptor call before tool.execute()
  *   4. Creates a backup of the original file
  *
  * Usage:
@@ -22,7 +22,7 @@ import { execSync } from "child_process";
 import { readFileSync, writeFileSync, existsSync, copyFileSync } from "fs";
 import { join, dirname } from "path";
 
-const VAAF_SERVER = process.env.VAAF_SERVER || "http://localhost:8000";
+const Council_SERVER = process.env.Council_SERVER || "http://localhost:8000";
 
 // ── Find OpenClaw installation ──
 
@@ -40,29 +40,29 @@ function findOpenClawDir() {
 
   for (const dir of candidates) {
     if (existsSync(dir)) {
-      console.log(`[VAAF] Found OpenClaw at: ${dir}`);
+      console.log(`[Council] Found OpenClaw at: ${dir}`);
       return dir;
     }
   }
 
-  console.error("[VAAF] ❌ Could not find OpenClaw installation");
-  console.error("[VAAF]   Tried:", candidates.join("\n         "));
-  console.error("[VAAF]   Make sure OpenClaw is installed: npm install -g openclaw");
+  console.error("[Council] ❌ Could not find OpenClaw installation");
+  console.error("[Council]   Tried:", candidates.join("\n         "));
+  console.error("[Council]   Make sure OpenClaw is installed: npm install -g openclaw");
   process.exit(1);
 }
 
-// ── The VAAF interceptor code to inject ──
+// ── The Council interceptor code to inject ──
 
-const VAAF_INTERCEPTOR_CODE = `
-// ═══ VAAF INTERCEPTOR — START ═══
-// Injected by VAAF (Verifiable Agent Autonomy Framework)
-// This block calls the VAAF council before every tool execution.
-const VAAF_SERVER_URL = "${VAAF_SERVER}";
+const Council_INTERCEPTOR_CODE = `
+// ═══ Council INTERCEPTOR — START ═══
+// Injected by Council (Verifiable Agent Autonomy Framework)
+// This block calls the Council council before every tool execution.
+const Council_SERVER_URL = "${Council_SERVER}";
 
 async function __vaaf_evaluate(toolName, params) {
   try {
     const desc = toolName + "(" + JSON.stringify(params || {}).slice(0, 200) + ")";
-    const res = await fetch(VAAF_SERVER_URL + "/api/evaluate", {
+    const res = await fetch(Council_SERVER_URL + "/api/evaluate", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -73,7 +73,7 @@ async function __vaaf_evaluate(toolName, params) {
       }),
     });
     if (!res.ok) {
-      console.error("[VAAF] Server error " + res.status + ", blocking action");
+      console.error("[Council] Server error " + res.status + ", blocking action");
       return { decision: "block" };
     }
     const data = await res.json();
@@ -82,48 +82,48 @@ async function __vaaf_evaluate(toolName, params) {
     if (data.council) {
       for (const v of data.council.votes) {
         const icon = v.verdict === "APPROVE" ? "✅" : v.verdict === "FLAG" ? "⚠️" : "🚫";
-        console.log("[VAAF] " + icon + " " + v.checker + ": " + v.verdict + " — " + v.reason);
+        console.log("[Council] " + icon + " " + v.checker + ": " + v.verdict + " — " + v.reason);
       }
     }
     
     if (data.decision === "allow") {
-      console.log("[VAAF] ✅ ALLOWED: " + desc);
+      console.log("[Council] ✅ ALLOWED: " + desc);
       return data;
     } else if (data.decision === "queue") {
-      console.log("[VAAF] ⏳ QUEUED for approval: " + desc);
+      console.log("[Council] ⏳ QUEUED for approval: " + desc);
       // Poll for approval
       const startTime = Date.now();
       while (Date.now() - startTime < 300000) {
         await new Promise(r => setTimeout(r, 1000));
         try {
-          const pollRes = await fetch(VAAF_SERVER_URL + "/api/evaluate/" + data.action_id + "/status");
+          const pollRes = await fetch(Council_SERVER_URL + "/api/evaluate/" + data.action_id + "/status");
           const pollData = await pollRes.json();
-          if (pollData.status === "approved") { console.log("[VAAF] ✅ Approved by user"); return { decision: "allow" }; }
-          if (pollData.status === "rejected") { console.log("[VAAF] ❌ Rejected by user"); return { decision: "block" }; }
+          if (pollData.status === "approved") { console.log("[Council] ✅ Approved by user"); return { decision: "allow" }; }
+          if (pollData.status === "rejected") { console.log("[Council] ❌ Rejected by user"); return { decision: "block" }; }
           if (pollData.status === "blocked") { return { decision: "block" }; }
         } catch (e) { /* continue polling */ }
       }
-      console.log("[VAAF] ⏰ Approval timed out, blocking");
+      console.log("[Council] ⏰ Approval timed out, blocking");
       return { decision: "block" };
     } else {
-      console.log("[VAAF] 🚫 BLOCKED: " + desc);
+      console.log("[Council] 🚫 BLOCKED: " + desc);
       return data;
     }
   } catch (e) {
-    console.error("[VAAF] ❌ Error contacting server: " + e.message);
+    console.error("[Council] ❌ Error contacting server: " + e.message);
     return { decision: "block" };
   }
 }
-// ═══ VAAF INTERCEPTOR — END ═══
+// ═══ Council INTERCEPTOR — END ═══
 `;
 
-const VAAF_GUARD_CODE = `
-    // ═══ VAAF GUARD — START ═══
+const Council_GUARD_CODE = `
+    // ═══ Council GUARD — START ═══
     const __vaaf_result = await __vaaf_evaluate(toolCall.name || toolName, validatedArgs || params);
     if (__vaaf_result.decision === "block") {
-      return { type: "tool_result", tool_use_id: toolCall.id || toolCallId, content: "[VAAF] Action blocked by security council" };
+      return { type: "tool_result", tool_use_id: toolCall.id || toolCallId, content: "[Council] Action blocked by security council" };
     }
-    // ═══ VAAF GUARD — END ═══
+    // ═══ Council GUARD — END ═══
 `;
 
 // ── Patching logic ──
@@ -148,7 +148,7 @@ function findToolExecutionFile(openclawDir) {
         content.includes("execute(toolCall") ||
         content.includes("executeTool")
       ) {
-        console.log(`[VAAF] Found tool execution in: ${rel}`);
+        console.log(`[Council] Found tool execution in: ${rel}`);
         return full;
       }
     }
@@ -162,14 +162,14 @@ function findToolExecutionFile(openclawDir) {
     }).trim();
     if (find) {
       const firstMatch = find.split("\n")[0];
-      console.log(`[VAAF] Found tool execution via grep: ${firstMatch}`);
+      console.log(`[Council] Found tool execution via grep: ${firstMatch}`);
       return firstMatch;
     }
   }
 
-  console.error("[VAAF] ❌ Could not find tool execution file");
-  console.error("[VAAF]   OpenClaw's internal structure may have changed");
-  console.error("[VAAF]   Use the plugin method instead (see SETUP.md)");
+  console.error("[Council] ❌ Could not find tool execution file");
+  console.error("[Council]   OpenClaw's internal structure may have changed");
+  console.error("[Council]   Use the plugin method instead (see SETUP.md)");
   process.exit(1);
 }
 
@@ -177,19 +177,19 @@ function applyPatch(filePath) {
   const content = readFileSync(filePath, "utf8");
 
   // Check if already patched
-  if (content.includes("VAAF INTERCEPTOR")) {
-    console.log("[VAAF] ⚠ File already patched. Use --revert first to re-patch.");
+  if (content.includes("Council INTERCEPTOR")) {
+    console.log("[Council] ⚠ File already patched. Use --revert first to re-patch.");
     return;
   }
 
   // Create backup
   const backupPath = filePath + ".vaaf-backup";
   copyFileSync(filePath, backupPath);
-  console.log(`[VAAF] Backup created: ${backupPath}`);
+  console.log(`[Council] Backup created: ${backupPath}`);
 
   // Strategy: inject the interceptor function at the top of the file,
   // then inject the guard call before tool.execute() invocations
-  let patched = VAAF_INTERCEPTOR_CODE + "\n" + content;
+  let patched = Council_INTERCEPTOR_CODE + "\n" + content;
 
   // Find and inject guard before common execution patterns
   const patterns = [
@@ -204,30 +204,30 @@ function applyPatch(filePath) {
   let injected = false;
   for (const pattern of patterns) {
     if (pattern.test(patched)) {
-      patched = patched.replace(pattern, VAAF_GUARD_CODE + "\n    $1");
+      patched = patched.replace(pattern, Council_GUARD_CODE + "\n    $1");
       injected = true;
       break; // Only inject once
     }
   }
 
   if (!injected) {
-    console.warn("[VAAF] ⚠ Could not find exact injection point");
-    console.warn("[VAAF]   Interceptor function added but guard not injected");
-    console.warn("[VAAF]   You may need to manually add the guard — see SETUP.md");
+    console.warn("[Council] ⚠ Could not find exact injection point");
+    console.warn("[Council]   Interceptor function added but guard not injected");
+    console.warn("[Council]   You may need to manually add the guard — see SETUP.md");
   }
 
   writeFileSync(filePath, patched);
-  console.log(`[VAAF] ✅ Patch applied to: ${filePath}`);
+  console.log(`[Council] ✅ Patch applied to: ${filePath}`);
 }
 
 function revertPatch(filePath) {
   const backupPath = filePath + ".vaaf-backup";
   if (!existsSync(backupPath)) {
-    console.error("[VAAF] ❌ No backup found. Cannot revert.");
+    console.error("[Council] ❌ No backup found. Cannot revert.");
     return;
   }
   copyFileSync(backupPath, filePath);
-  console.log(`[VAAF] ✅ Reverted to original: ${filePath}`);
+  console.log(`[Council] ✅ Reverted to original: ${filePath}`);
 }
 
 // ── Main ──
@@ -242,15 +242,15 @@ if (revert) {
   revertPatch(targetFile);
 } else {
   applyPatch(targetFile);
-  console.log("\n[VAAF] ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-  console.log("[VAAF] Patch applied successfully!");
-  console.log("[VAAF] ");
-  console.log("[VAAF] Make sure the VAAF server is running:");
-  console.log("[VAAF]   cd vaaf && python server.py");
-  console.log("[VAAF] ");
-  console.log("[VAAF] Then restart OpenClaw:");
-  console.log("[VAAF]   openclaw restart");
-  console.log("[VAAF] ");
-  console.log("[VAAF] Open http://localhost:8000 to see the dashboard");
-  console.log("[VAAF] ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+  console.log("\n[Council] ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+  console.log("[Council] Patch applied successfully!");
+  console.log("[Council] ");
+  console.log("[Council] Make sure the Council server is running:");
+  console.log("[Council]   cd vaaf && python server.py");
+  console.log("[Council] ");
+  console.log("[Council] Then restart OpenClaw:");
+  console.log("[Council]   openclaw restart");
+  console.log("[Council] ");
+  console.log("[Council] Open http://localhost:8000 to see the dashboard");
+  console.log("[Council] ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
 }

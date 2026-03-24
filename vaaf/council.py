@@ -1,5 +1,5 @@
 """
-VAAF Review Council
+Council Review Council
 -------------------
 Three purpose-trained small-model classifiers that evaluate every proposed action
 in parallel. Each answers ONE specific question about the action.

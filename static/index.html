@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>VAAF — Verifiable Agent Autonomy Framework</title>
+<title>Council — Verifiable Agent Autonomy Framework</title>
 <style>
 * { margin: 0; padding: 0; box-sizing: border-box; }
 :root {
@@ -122,7 +122,7 @@ button { cursor: pointer; border: none; font-family: inherit; }
 <body>
 
 <div class="topbar">
-  <h1>VAAF</h1>
+  <h1>Council</h1>
   <span class="tag">prototype</span>
   <button class="settings-btn" onclick="openSettings()">⚙ Settings</button>
 </div>
@@ -138,7 +138,7 @@ button { cursor: pointer; border: none; font-family: inherit; }
   <!-- CHAT -->
   <div class="panel active" id="panel-chat">
     <div class="chat-messages" id="chat-messages">
-      <div class="msg system">VAAF is active. Your agent's actions will be evaluated by the Review Council before execution. Type a message to start.</div>
+      <div class="msg system">Council is active. Your agent's actions will be evaluated by the Review Council before execution. Type a message to start.</div>
     </div>
     <div class="chat-input">
       <input type="text" id="chat-input" placeholder="Tell the agent what to do..." onkeydown="if(event.key==='Enter')sendMessage()">

@@ -1,5 +1,5 @@
 """
-VAAF Audit Logger
+Council Audit Logger
 -----------------
 In-memory event store for the prototype.
 Production: replace with EigenDA for immutable, verifiable storage.

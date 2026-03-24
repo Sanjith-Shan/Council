@@ -1,5 +1,5 @@
 """
-VAAF Tier Classifier
+Council Tier Classifier
 --------------------
 Pre-filters trivially safe actions to Tier 1, tracks first-use tools
 for automatic Tier 3 escalation, and delegates contextual evaluation
@@ -24,7 +24,7 @@ TRIVIALLY_SAFE_TOOLS = {
     "glob",
     "think",
     "fetch",
-    # VAAF standalone tool names
+    # Council standalone tool names
     "web_search",
     "read_file",
     "list_files",

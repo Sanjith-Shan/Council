@@ -1,5 +1,5 @@
 """
-VAAF Command Analyzer
+Council Command Analyzer
 ---------------------
 Parses the actual shell command inside OpenClaw's 'exec' tool calls
 and classifies them as safe (skip council) or risky (needs evaluation).

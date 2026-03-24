@@ -1,6 +1,6 @@
-# VAAF + OpenClaw Integration — Complete Setup Guide
+# Council + OpenClaw Integration — Complete Setup Guide
 
-This guide gets you from zero to a working OpenClaw agent with the VAAF
+This guide gets you from zero to a working OpenClaw agent with the Council
 Review Council intercepting every action. There are three integration
 methods — pick the one that matches your setup.
 
@@ -11,7 +11,7 @@ methods — pick the one that matches your setup.
 You need:
 - **Node.js 18+** (`node --version`)
 - **Python 3.10+** (`python3 --version`)
-- **An OpenAI API key** (for the VAAF council — uses GPT-4o-mini)
+- **An OpenAI API key** (for the Council council — uses GPT-4o-mini)
 - **macOS, Linux, or WSL2 on Windows**
 
 ---
@@ -30,7 +30,7 @@ If you already have OpenClaw running, skip this step.
 
 ---
 
-## Step 2: Set Up the VAAF Server
+## Step 2: Set Up the Council Server
 
 ```bash
 # Navigate to the vaaf directory (wherever you extracted it)
@@ -44,14 +44,14 @@ cp .env.example .env
 nano .env
 # Change sk-your-key-here to your actual key, save
 
-# Start the VAAF server
+# Start the Council server
 python server.py
 ```
 
 You should see:
 ```
 ✓ OpenAI client initialized
-✓ VAAF server ready at http://localhost:8000
+✓ Council server ready at http://localhost:8000
 ```
 
 **Leave this terminal running.** Open a new terminal for the next steps.
@@ -63,7 +63,7 @@ You should see:
 ### Method A: ClawBands (Recommended — easiest)
 
 ClawBands is a community security middleware that already intercepts
-every OpenClaw tool call. We replace its policy engine with VAAF.
+every OpenClaw tool call. We replace its policy engine with Council.
 
 ```bash
 # Install ClawBands
@@ -74,9 +74,9 @@ clawbands init
 ```
 
 During setup, when asked about the policy, choose the most permissive
-option — VAAF will handle all the decisions.
+option — Council will handle all the decisions.
 
-Now edit ClawBands' policy to route through VAAF. Open the policy file:
+Now edit ClawBands' policy to route through Council. Open the policy file:
 
 ```bash
 nano ~/.openclaw/clawbands/policy.json
@@ -113,7 +113,7 @@ openclaw restart
 
 ### Method B: Source Patch (Most reliable for demos)
 
-This directly patches OpenClaw's tool execution code to call VAAF
+This directly patches OpenClaw's tool execution code to call Council
 before every action. Most reliable but modifies OpenClaw's files.
 
 ```bash
@@ -125,15 +125,15 @@ node patch-openclaw.js
 The script will:
 1. Find your OpenClaw installation
 2. Locate the tool execution file
-3. Inject the VAAF interceptor
+3. Inject the Council interceptor
 4. Create a backup of the original file
 
 You should see:
 ```
-[VAAF] Found OpenClaw at: /path/to/openclaw
-[VAAF] Found tool execution in: dist/agents/...
-[VAAF] Backup created: ...vaaf-backup
-[VAAF] ✅ Patch applied successfully!
+[Council] Found OpenClaw at: /path/to/openclaw
+[Council] Found tool execution in: dist/agents/...
+[Council] Backup created: ...vaaf-backup
+[Council] ✅ Patch applied successfully!
 ```
 
 Restart OpenClaw:
@@ -150,7 +150,7 @@ node integration/patch-openclaw.js --revert
 
 ### Method C: Plugin Registration (Cleanest, but hook support varies)
 
-Copy the VAAF plugin into OpenClaw's extensions:
+Copy the Council plugin into OpenClaw's extensions:
 
 ```bash
 # Copy the plugin
@@ -189,10 +189,10 @@ Method B (source patch) instead.
 
 ## Step 4: Verify the Integration
 
-1. Open the VAAF dashboard: **http://localhost:8000**
+1. Open the Council dashboard: **http://localhost:8000**
 2. Send a message to your OpenClaw agent through any channel (Discord, WhatsApp, terminal)
 3. Ask it to do something: "Search for the latest news about AI agents"
-4. Watch the VAAF dashboard:
+4. Watch the Council dashboard:
    - The **Activity Feed** tab should show the action being evaluated
    - If it was a trivially safe action (web search), it should auto-execute (Tier 1)
 5. Try a riskier action: "Send an email to john@example.com introducing our product"
@@ -206,7 +206,7 @@ Method B (source patch) instead.
 
 ## Step 5: Configure Your Risk Profile
 
-1. Click the **⚙ Settings** button in the VAAF dashboard
+1. Click the **⚙ Settings** button in the Council dashboard
 2. Answer the multiple-choice questions about your risk tolerance
 3. Save
 4. Test again — the council's behavior will adjust based on your profile
@@ -231,7 +231,7 @@ You send a message via Discord/WhatsApp/Terminal
    OpenClaw's LLM reasons and proposes tool calls
           │
           ▼
-   ┌─ VAAF INTERCEPTS (before execution) ─┐
+   ┌─ Council INTERCEPTS (before execution) ─┐
    │                                        │
    │  Pre-filter: is this trivially safe?   │
    │    YES → Tier 1, auto-execute          │
@@ -259,8 +259,8 @@ You send a message via Discord/WhatsApp/Terminal
 
 ## Troubleshooting
 
-### "VAAF server unavailable" errors
-Make sure the VAAF server is running on port 8000:
+### "Council server unavailable" errors
+Make sure the Council server is running on port 8000:
 ```bash
 cd vaaf && python server.py
 ```
@@ -268,11 +268,11 @@ cd vaaf && python server.py
 ### Actions aren't being intercepted
 - **Method A:** Check that ClawBands is running: `clawbands status`
 - **Method B:** Make sure you restarted OpenClaw after patching: `openclaw restart`
-- **Method C:** Check OpenClaw logs for "[VAAF]" messages: `openclaw logs --follow`
+- **Method C:** Check OpenClaw logs for "[Council]" messages: `openclaw logs --follow`
 
 ### All actions are being blocked
 - Check that your OpenAI API key is valid (the council needs it)
-- Check the VAAF server logs for errors
+- Check the Council server logs for errors
 - Set a more permissive risk profile via Settings
 
 ### Patch script can't find OpenClaw
@@ -298,7 +298,7 @@ rm -rf ~/.openclaw/extensions/vaaf-plugin
 ## For the Demo
 
 ### Night before:
-1. Start VAAF server: `cd vaaf && python server.py`
+1. Start Council server: `cd vaaf && python server.py`
 2. Start OpenClaw (already integrated)
 3. Set your risk profile via the dashboard
 4. Give the agent a task: "Research competitors and draft a customer outreach strategy for [your product]. Draft 5 personalized emails, suggest a social media plan, and propose a marketing budget."
@@ -325,13 +325,13 @@ Have backup prompts ready that will trigger each tier:
 
 ```
 vaaf/
-├── server.py                     # VAAF server (FastAPI) — run this
+├── server.py                     # Council server (FastAPI) — run this
 ├── requirements.txt              # Python dependencies
 ├── .env                          # Your OpenAI API key
 ├── .env.example                  # Template
 ├── README.md                     # Quick start guide
 │
-├── vaaf/                         # Core VAAF modules
+├── vaaf/                         # Core Council modules
 │   ├── __init__.py
 │   ├── models.py                 # Data models (tiers, verdicts, actions)
 │   ├── council.py                # Review Council (3 parallel classifiers)
