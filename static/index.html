@@ -38,6 +38,10 @@ button, input { font-family: inherit; }
   padding: calc(env(safe-area-inset-top) + 10px) 14px 10px; display: flex; align-items: center; justify-content: space-between;
 }
 .brand { font-size: 19px; font-weight: 700; letter-spacing: 0.2px; }
+.topbar-left { display: flex; flex-direction: column; gap: 4px; }
+.gateway-status { display: inline-flex; align-items: center; gap: 7px; font-size: 12px; color: var(--text-muted); }
+.gateway-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--warning); box-shadow: 0 0 0 2px rgba(234,179,8,.2); }
+.gateway-status.connected .gateway-dot { background: var(--success); box-shadow: 0 0 0 2px rgba(34,197,94,.2); }
 .settings-btn { width: 44px; height: 44px; border: 1px solid var(--border); border-radius: 50%; background: var(--surface2); color: var(--text); display: grid; place-items: center; cursor: pointer; }
 .settings-btn svg { width: 18px; height: 18px; }
 .content { flex: 1; min-height: 0; overflow: hidden; padding-bottom: calc(78px + env(safe-area-inset-bottom)); }
@@ -207,7 +211,13 @@ button, input { font-family: inherit; }
 <body>
 <div class="app">
   <header class="topbar">
-    <div class="brand">Council</div>
+    <div class="topbar-left">
+      <div class="brand">Council</div>
+      <div class="gateway-status" id="gateway-status" aria-live="polite">
+        <span class="gateway-dot" aria-hidden="true"></span>
+        <span id="gateway-status-text">Checking gateway...</span>
+      </div>
+    </div>
     <button class="settings-btn" onclick="openSettings()" aria-label="Open settings">
       <svg viewBox="0 0 24 24"><path d="M12 8.5a3.5 3.5 0 1 0 0 7 3.5 3.5 0 0 0 0-7Z"></path><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.87l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06A1.7 1.7 0 0 0 15 19.4a1.7 1.7 0 0 0-1 .54 1.7 1.7 0 0 0-.4 1.1V21a2 2 0 0 1-4 0v-.08a1.7 1.7 0 0 0-.4-1.1 1.7 1.7 0 0 0-1-.54 1.7 1.7 0 0 0-1.87.34l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.7 1.7 0 0 0 4.6 15a1.7 1.7 0 0 0-.54-1 1.7 1.7 0 0 0-1.1-.4H2.9a2 2 0 0 1 0-4h.08a1.7 1.7 0 0 0 1.1-.4 1.7 1.7 0 0 0 .54-1 1.7 1.7 0 0 0-.34-1.87l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.7 1.7 0 0 0 9 4.6a1.7 1.7 0 0 0 1-.54 1.7 1.7 0 0 0 .4-1.1V2.9a2 2 0 0 1 4 0v.08a1.7 1.7 0 0 0 .4 1.1 1.7 1.7 0 0 0 1 .54 1.7 1.7 0 0 0 1.87-.34l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.7 1.7 0 0 0 19.4 9c.25.3.43.65.54 1 .11.36.16.74.16 1.13s-.05.77-.16 1.13a2.8 2.8 0 0 1-.54 1Z"></path></svg>
     </button>
@@ -242,6 +252,30 @@ if ('serviceWorker' in navigator) { window.addEventListener('load', () => naviga
 function switchTab(tab) { document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === tab)); document.querySelectorAll('.panel').forEach(p => p.classList.toggle('active', p.id === `panel-${tab}`)); if (tab === 'approvals') loadApprovals(); if (tab === 'activity') loadActivity(); if (tab === 'insights') loadInsights(); }
 let notifiedApprovalIds = new Set();
 let notificationPermissionAsked = false;
+let gatewayStatus = { connected: false, mode: 'standalone', gateway_url: '' };
+
+function applyGatewayStatus(status) {
+  gatewayStatus = status || { connected: false, mode: 'standalone', gateway_url: '' };
+  const statusEl = document.getElementById('gateway-status');
+  const statusTextEl = document.getElementById('gateway-status-text');
+  const inputEl = document.getElementById('chat-input');
+  const connected = !!gatewayStatus.connected;
+  if (statusEl) statusEl.classList.toggle('connected', connected);
+  if (statusTextEl) statusTextEl.textContent = connected ? 'Connected to OpenClaw' : 'Standalone mode';
+  if (inputEl) inputEl.placeholder = connected ? 'Talk to your OpenClaw agent...' : 'Talk to Council agent...';
+}
+
+async function refreshGatewayStatus() {
+  try {
+    const res = await fetch('/api/gateway/status');
+    if (!res.ok) throw new Error('Gateway status unavailable');
+    const data = await res.json();
+    applyGatewayStatus(data);
+  } catch (_) {
+    applyGatewayStatus({ connected: false, mode: 'standalone', gateway_url: '' });
+  }
+}
+
 async function requestNotificationPermission() {
   if (notificationPermissionAsked) return;
   notificationPermissionAsked = true;
@@ -719,7 +753,9 @@ function setupApprovalsPullToRefresh() {
 
 setInterval(updateApprovalBadge, 5000);
 setInterval(() => { const panel = document.getElementById('panel-activity'); if (panel && panel.classList.contains('active')) loadActivity(); }, 5000);
+setInterval(refreshGatewayStatus, 30000);
 updateApprovalBadge();
+refreshGatewayStatus();
 maybeStartOnboarding();
 </script>
 </body>

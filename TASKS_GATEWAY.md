@@ -76,15 +76,15 @@
 - [x] Git commit: "feat: configure gateway token"
 
 ## Task 5: Show connection status in the UI
-- [ ] In static/index.html, add a connection indicator to the top bar:
+- [x] In static/index.html, add a connection indicator to the top bar:
   - Green dot + "Connected to OpenClaw" when gateway is connected
   - Yellow dot + "Standalone mode" when using standalone agent
-- [ ] On page load, call `GET /api/gateway/status` and update the indicator
-- [ ] In the chat input placeholder, show:
+- [x] On page load, call `GET /api/gateway/status` and update the indicator
+- [x] In the chat input placeholder, show:
   - "Talk to your OpenClaw agent..." when connected
   - "Talk to Council agent..." when standalone
-- [ ] Poll gateway status every 30 seconds and update indicator
-- [ ] Git commit: "feat: show gateway connection status in UI"
+- [x] Poll gateway status every 30 seconds and update indicator
+- [x] Git commit: "feat: show gateway connection status in UI"
 
 ## Task 6: Improve chat to show OpenClaw's tool usage
 - [ ] When OpenClaw responds, its text often contains tool usage info (like "[used tool: exec]" or similar markers)
