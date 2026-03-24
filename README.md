@@ -1,6 +1,11 @@
-# VAAF — Verifiable Agent Autonomy Framework
+# Council — Agent Security Framework
 
-A security middleware for AI agents that evaluates whether proposed actions are **beneficial for the user** — not just whether the agent has access.
+The true value of an AI agent lies in its ability to continuously ideate and execute at scale. However, this boundless capability is also what makes them inherently dangerous. A single unaligned decision or miscalculation can be catastrophic, devastating a user's data, finances, or reputation. This has created a critical necessity for security measures.
+
+Currently, every existing agent security solution, like NanoClaw and Nvidia's NemoClaw solve only for containment. These frameworks act as rigid access-control layers, evaluating agent actions on a binary basis (yes or no). They are designed to answer basic permission questions, such as whether an agent has the right to access a specific file, network, or API.
+
+But containment is not alignment. Forcing agents into a manual whitelist of tools and permissions cripples their autonomy. Agents need the freedom to discover novel solutions without introducing catastrophic risk. The Council solves this by replacing static whitelists with a dynamic safety layer. Every action is evaluated for alignment before execution, allowing the agent to think without limits while acting within safe, proven boundaries that adapt to your risk tolerance over time.
+
 
 ## Quick Start
 
