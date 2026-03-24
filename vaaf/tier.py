@@ -50,9 +50,12 @@ ALWAYS_EVALUATE_TOOLS = {
 
 
 class TierClassifier:
-    def __init__(self):
-        self.seen_tools: set[str] = set()
-        self.seen_exec_patterns: set[str] = set()
+    def __init__(self, db=None):
+        self.db = db
+        saved_tools = set(db.get_user_setting("seen_tools", [])) if db else set()
+        saved_exec_patterns = set(db.get_user_setting("seen_exec_patterns", [])) if db else set()
+        self.seen_tools: set[str] = saved_tools
+        self.seen_exec_patterns: set[str] = saved_exec_patterns
 
     def pre_filter(self, action: ProposedAction) -> Tier | None:
         """Check if action is trivially safe.
@@ -87,6 +90,10 @@ class TierClassifier:
             command = action.parameters.get("command", "")
             base = extract_base_command(command)
             self.seen_exec_patterns.add(f"exec:{base}")
+
+        if self.db:
+            self.db.set_user_setting("seen_tools", sorted(self.seen_tools))
+            self.db.set_user_setting("seen_exec_patterns", sorted(self.seen_exec_patterns))
 
     def classify(
         self,

@@ -25,15 +25,15 @@
 - [x] In all Python files: update docstrings and comments
 - [x] Git commit: "rename: VAAF → Council"
 
-### Task 2: Add SQLite persistent storage
-- [ ] Create vaaf/database.py with SQLite backend
-- [ ] Tables needed: actions, events, risk_profile, user_settings
-- [ ] Migrate AuditLog from in-memory lists to SQLite
-- [ ] Store risk profile in SQLite so it persists across server restarts
-- [ ] Store seen_tools and seen_exec_patterns in SQLite for tier classifier persistence
-- [ ] Update server.py to use database on startup
-- [ ] Test: restart server, verify data persists
-- [ ] Git commit: "feat: persistent SQLite storage"
+### Task 2: Add SQLite persistent storage — completed 2026-03-24T08:06:41Z by cron
+- [x] Create vaaf/database.py with SQLite backend
+- [x] Tables needed: actions, events, risk_profile, user_settings
+- [x] Migrate AuditLog from in-memory lists to SQLite
+- [x] Store risk profile in SQLite so it persists across server restarts
+- [x] Store seen_tools and seen_exec_patterns in SQLite for tier classifier persistence
+- [x] Update server.py to use database on startup
+- [x] Test: restart server, verify data persists
+- [x] Git commit: "feat: persistent SQLite storage"
 
 ### Task 3: Add user_goal and user_name to settings storage
 - [ ] Store user_goal in SQLite

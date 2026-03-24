@@ -26,6 +26,7 @@ from vaaf.council import evaluate_action
 from vaaf.tier import TierClassifier
 from vaaf.agent import get_agent_response, extract_proposed_actions, simulate_tool_execution
 from vaaf.audit import AuditLog
+from vaaf.database import CouncilDatabase
 from vaaf.risk_profile import (
     ONBOARDING_QUESTIONS, build_profile, profile_to_context,
 )
@@ -35,10 +36,11 @@ load_dotenv()
 # ── Global state ──────────────────────────────────────────────────────────
 
 client: AsyncOpenAI | None = None
-tier_classifier = TierClassifier()
-audit_log = AuditLog()
-risk_profile = RiskProfile()  # Default conservative
-user_goal = "Grow my online business and increase customer engagement"
+db = CouncilDatabase("council.db")
+tier_classifier = TierClassifier(db=db)
+audit_log = AuditLog(db=db)
+risk_profile = db.load_risk_profile() or RiskProfile()  # Default conservative
+user_goal = db.get_user_setting("user_goal", "Grow my online business and increase customer engagement")
 chat_history: list[dict] = []  # OpenAI message format
 
 
@@ -108,6 +110,7 @@ async def update_profile(req: ProfileAnswers):
     """Update risk profile from onboarding answers."""
     global risk_profile
     risk_profile = build_profile(req.answers)
+    db.save_risk_profile(risk_profile)
     audit_log.log_event(ActivityEvent(
         event_type="profile_updated",
         summary="Risk profile updated",
@@ -121,6 +124,7 @@ async def update_goal(req: GoalUpdate):
     """Update the user's stated goal."""
     global user_goal
     user_goal = req.goal
+    db.set_user_setting("user_goal", user_goal)
     return {"goal": user_goal}
 
 
