@@ -96,7 +96,21 @@ button, input { font-family: inherit; }
 .event-dot.blue { background: var(--accent); }
 .event-dot.gray { background: #6b7280; }
 .event-text { flex: 1; font-size: 13px; }
-.event-time { color: var(--text-muted); font-size: 11px; }
+.event-time { color: var(--text-muted); font-size: 11px; white-space: nowrap; }
+.activity-filters { display: flex; gap: 8px; margin-bottom: 10px; position: sticky; top: 0; z-index: 5; background: linear-gradient(var(--bg), var(--bg)); padding-bottom: 6px; }
+.filter-btn { min-height: 36px; border: 1px solid var(--border); border-radius: var(--radius-pill); background: var(--surface2); color: var(--text-muted); padding: 0 12px; font-size: 12px; }
+.filter-btn.active { color: var(--accent); border-color: #2d4d84; background: #142237; }
+.event-item { background: #121212; border: 1px solid #202020; border-radius: 12px; margin-bottom: 8px; overflow: hidden; }
+.event-row { display: flex; gap: 10px; align-items: flex-start; padding: 11px; margin-bottom: 0; }
+.event-item.expanded .event-row { border-bottom: 1px solid #212121; }
+.event-detail { display: none; padding: 10px 11px 12px 29px; font-size: 12px; color: var(--text-muted); }
+.event-item.expanded .event-detail { display: block; }
+.event-kv { margin-bottom: 6px; line-height: 1.45; }
+.event-kv code { background: #191919; border: 1px solid #2a2a2a; border-radius: 6px; padding: 1px 4px; color: #c7c7c7; }
+.event-votes { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+.timeline-line { position: relative; }
+.timeline-line::before { content: ''; position: absolute; left: 15px; top: 26px; bottom: -8px; width: 2px; background: #242424; }
+.event-item:last-child .timeline-line::before { display: none; }
 .goal-box { padding: 14px; margin-bottom: 12px; }
 .goal-box h3 { color: var(--text-muted); margin-bottom: 6px; font-size: 12px; }
 .stat-grid { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 10px; }
@@ -153,7 +167,7 @@ button, input { font-family: inherit; }
   <main class="content">
     <section class="panel active" id="panel-chat"><div class="chat-panel"><div class="chat-messages" id="chat-messages"><div class="msg system">Council is active. Agent actions are reviewed before execution.</div></div><div class="chat-input"><input type="text" id="chat-input" placeholder="Tell the agent what to do..." onkeydown="if(event.key==='Enter')sendMessage()"><button id="send-btn" onclick="sendMessage()">Send</button></div></div></section>
     <section class="panel" id="panel-approvals"><div class="approval-list" id="approval-list"><div class="approvals-refresh" id="approvals-refresh">Pull to refresh</div><div class="empty"><svg class="check-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m20 6-11 11-5-5"></path></svg><span>All clear — no actions pending</span></div></div></section>
-    <section class="panel" id="panel-activity"><div class="activity-list" id="activity-list"><div class="empty">No activity yet. Start chatting.</div></div></section>
+    <section class="panel" id="panel-activity"><div class="activity-list" id="activity-list"><div class="activity-filters" id="activity-filters"><button class="filter-btn active" data-filter="all" onclick="setActivityFilter('all')">All</button><button class="filter-btn" data-filter="auto" onclick="setActivityFilter('auto')">Auto</button><button class="filter-btn" data-filter="flagged" onclick="setActivityFilter('flagged')">Flagged</button><button class="filter-btn" data-filter="blocked" onclick="setActivityFilter('blocked')">Blocked</button></div><div class="empty">No activity yet. Start chatting.</div></div></section>
     <section class="panel" id="panel-insights"><div class="insights"><div class="goal-box"><h3>Current Goal</h3><p id="goal-text">Loading...</p></div><div class="stat-grid" id="stat-grid"></div></div></section>
   </main>
   <nav class="bottom-nav" aria-label="Primary navigation">
@@ -240,7 +254,24 @@ async function handleApproval(actionId, approved) {
 }
 
 async function updateApprovalBadge() { const res = await fetch('/api/approvals'); const data = await res.json(); const count = data.pending?.length || 0; const badge = document.getElementById('approval-badge'); badge.textContent = count; badge.style.display = count > 0 ? 'flex' : 'none'; }
-async function loadActivity() { const res = await fetch('/api/activity'); const data = await res.json(); const list = document.getElementById('activity-list'); if (!data.events?.length) { list.innerHTML = '<div class="empty">No activity yet. Start chatting.</div>'; return; } list.innerHTML = data.events.map(e => `<div class="event-row"><span class="event-dot ${getDotColor(e)}"></span><span class="event-text">${escapeHtml(e.summary)}</span><span class="event-time">${new Date(e.timestamp).toLocaleTimeString()}</span></div>`).join(''); }
+async function loadActivity() {
+  try {
+    const res = await fetch('/api/activity');
+    const data = await res.json();
+    const list = document.getElementById('activity-list');
+    const filterBar = document.getElementById('activity-filters')?.outerHTML || '';
+    const events = (data.events || []).filter(matchesActivityFilter);
+    if (!events.length) {
+      list.innerHTML = `${filterBar}<div class="empty">No activity yet. Start chatting.</div>`;
+      return;
+    }
+    list.innerHTML = `${filterBar}${events.map(renderActivityEvent).join('')}`;
+  } catch (e) {
+    const list = document.getElementById('activity-list');
+    const filterBar = document.getElementById('activity-filters')?.outerHTML || '';
+    list.innerHTML = `${filterBar}<div class="empty">Could not load activity feed.</div>`;
+  }
+}
 async function loadInsights() { const [statsRes, goalRes] = await Promise.all([fetch('/api/insights'), fetch('/api/goal')]); const statsData = await statsRes.json(); const goalData = await goalRes.json(); document.getElementById('goal-text').textContent = goalData.goal; const s = statsData.stats; document.getElementById('stat-grid').innerHTML = `<div class="stat-card blue"><div class="number">${s.total_actions}</div><div class="label">Total actions</div></div><div class="stat-card green"><div class="number">${s.auto_executed}</div><div class="label">Auto</div></div><div class="stat-card green"><div class="number">${s.approved}</div><div class="label">Approved</div></div><div class="stat-card red"><div class="number">${s.blocked + s.rejected}</div><div class="label">Blocked/Rejected</div></div><div class="stat-card purple"><div class="number">${s.council_evaluations}</div><div class="label">Council evals</div></div><div class="stat-card blue"><div class="number">${s.avg_council_latency_ms}</div><div class="label">Avg latency</div></div>`; }
 let settingsQuestions = [];
 async function openSettings() { const res = await fetch('/api/onboarding'); const data = await res.json(); settingsQuestions = data.questions || []; const current = data.current_profile || {}; document.getElementById('settings-questions').innerHTML = settingsQuestions.map(q => `<div class="q-group"><label>${escapeHtml(q.question)}</label>${q.options.map(o => `<label class="option"><input type="radio" name="${q.id}" value="${o.value}" ${current[q.id] === o.value ? 'checked' : ''}>${escapeHtml(o.label)}</label>`).join('')}</div>`).join(''); document.getElementById('settings-modal').classList.add('show'); }
@@ -250,6 +281,38 @@ function escapeHtml(s) { return (s || '').replace(/&/g,'&amp;').replace(/</g,'&l
 function getTierClass(t) { if (t === 'tier1_auto') return 'auto'; if (t === 'tier2_notify') return 'notify'; if (t === 'tier3_approve') return 'approve'; if (t === 'tier4_blocked') return 'blocked'; return ''; }
 function getTierLabel(t) { if (t === 'tier1_auto') return 'Auto-executed'; if (t === 'tier2_notify') return 'Executed'; if (t === 'tier3_approve') return 'Needs approval'; if (t === 'tier4_blocked') return 'Blocked'; return t; }
 function getDotColor(e) { if (e.tier === 'tier1_auto') return 'green'; if (e.tier === 'tier2_notify') return 'yellow'; if (e.tier === 'tier3_approve') return 'orange'; if (e.tier === 'tier4_blocked') return 'red'; if (e.event_type === 'message_received') return 'blue'; if (e.event_type === 'action_approved') return 'green'; if (e.event_type === 'action_rejected') return 'red'; return 'gray'; }
+let activityFilter = 'all';
+function setActivityFilter(next) {
+  activityFilter = next;
+  document.querySelectorAll('#activity-filters .filter-btn').forEach(btn => btn.classList.toggle('active', btn.dataset.filter === next));
+  loadActivity();
+}
+function matchesActivityFilter(e) {
+  if (activityFilter === 'all') return true;
+  if (activityFilter === 'auto') return e.tier === 'tier1_auto' || e.event_type === 'action_approved';
+  if (activityFilter === 'blocked') return e.tier === 'tier4_blocked' || e.event_type === 'action_rejected';
+  if (activityFilter === 'flagged') return e.tier === 'tier3_approve' || e.tier === 'tier2_notify' || e.event_type === 'action_approved' || e.event_type === 'action_rejected';
+  return true;
+}
+function renderActivityEvent(e) {
+  const time = new Date(e.timestamp).toLocaleTimeString();
+  const details = e.details || {};
+  const detailBits = [];
+  if (details.tool) detailBits.push(`<div class="event-kv"><strong>Tool:</strong> <code>${escapeHtml(details.tool)}</code></div>`);
+  if (details.status) detailBits.push(`<div class="event-kv"><strong>Status:</strong> ${escapeHtml(details.status)}</div>`);
+  if (details.first_use_escalated) detailBits.push('<div class="event-kv">🆕 First time using this tool</div>');
+  if (details.parameters && Object.keys(details.parameters).length) detailBits.push(`<div class="event-kv"><strong>Parameters:</strong> <code>${escapeHtml(JSON.stringify(details.parameters))}</code></div>`);
+  const votes = details.council_votes || details.verdicts || [];
+  if (votes.length) detailBits.push(`<div class="event-kv"><strong>Council verdicts:</strong><div class="event-votes">${votes.map(v=>`<span class="verdict-chip ${escapeHtml(v.verdict || 'FLAG')}">${escapeHtml(v.checker || 'checker')}: ${escapeHtml(v.verdict || 'FLAG')} · ${escapeHtml(v.reason || 'No reason')}</span>`).join('')}</div></div>`);
+  if (!detailBits.length) detailBits.push('<div class="event-kv">No additional details available.</div>');
+  return `<article class="event-item" id="event-${escapeHtml(e.id)}"><button class="event-row timeline-line" onclick="toggleEventDetails('${escapeHtml(e.id)}')" style="width:100%;background:transparent;border:none;color:inherit;text-align:left"><span class="event-dot ${getDotColor(e)}"></span><span class="event-text">${escapeHtml(e.summary)}</span><span class="event-time">${time}</span></button><div class="event-detail">${detailBits.join('')}</div></article>`;
+}
+function toggleEventDetails(id) {
+  const el = document.getElementById(`event-${id}`);
+  if (!el) return;
+  el.classList.toggle('expanded');
+}
+
 
 let approvalsPullBound = false;
 function setupApprovalsPullToRefresh() {
@@ -300,7 +363,9 @@ function setupApprovalsPullToRefresh() {
   approvalsPullBound = true;
 }
 
-setInterval(updateApprovalBadge, 5000); updateApprovalBadge();
+setInterval(updateApprovalBadge, 5000);
+setInterval(() => { const panel = document.getElementById('panel-activity'); if (panel && panel.classList.contains('active')) loadActivity(); }, 5000);
+updateApprovalBadge();
 </script>
 </body>
 </html>

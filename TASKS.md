@@ -104,19 +104,19 @@
 - [x] Pull-to-refresh on mobile
 - [x] Git commit: "feat: polished approvals interface"
 
-### Task 9: Activity tab — live event timeline
-- [ ] Vertical timeline with color-coded dots
+### Task 9: Activity tab — live event timeline — completed 2026-03-24T10:24:48Z by cron
+- [x] Vertical timeline with color-coded dots
   - Green dot: Tier 1 auto-executed
   - Yellow dot: Tier 2 notified
   - Orange dot: Tier 3 pending/approved
   - Red dot: Tier 4 blocked or rejected
   - Blue dot: messages sent/received
   - Gray dot: system events (profile updates, server start)
-- [ ] Each event row: dot + summary text + timestamp (right-aligned)
-- [ ] Tapping an event expands it to show full details (tool name, parameters, council verdicts if applicable)
-- [ ] Auto-refresh every 5 seconds (or use SSE for real-time)
-- [ ] Filter buttons at top: All, Auto, Flagged, Blocked
-- [ ] Git commit: "feat: polished activity feed"
+- [x] Each event row: dot + summary text + timestamp (right-aligned)
+- [x] Tapping an event expands it to show full details (tool name, parameters, council verdicts if applicable)
+- [x] Auto-refresh every 5 seconds (or use SSE for real-time)
+- [x] Filter buttons at top: All, Auto, Flagged, Blocked
+- [x] Git commit: "feat: polished activity feed"
 
 ### Task 10: Insights tab — stats dashboard
 - [ ] Top section: greeting "Good morning, [name]" with current goal displayed
