@@ -65,7 +65,7 @@ button, input { font-family: inherit; }
 .chat-input input { flex: 1; min-height: 44px; border-radius: var(--radius-pill); border: 1px solid var(--border); background: var(--surface2); color: var(--text); padding: 10px 14px; font-size: 14px; outline: none; }
 .chat-input input:focus { border-color: var(--accent); }
 .chat-input button { min-height: 44px; padding: 0 16px; border-radius: var(--radius-pill); border: none; background: var(--accent); color: #fff; font-weight: 600; }
-.approval-item, .stat-card, .goal-box { background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius-card); }
+.approval-item, .stat-card, .goal-box, .greeting-box, .insights-card { background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius-card); }
 .approvals-refresh { text-align: center; color: var(--text-muted); font-size: 12px; min-height: 20px; margin-bottom: 8px; transition: transform .15s ease, opacity .15s ease; opacity: .8; }
 .approvals-refresh.ready { color: var(--accent); font-weight: 600; opacity: 1; }
 .approval-item { padding: 12px; margin-bottom: 10px; animation: fadeUp .18s ease; }
@@ -111,9 +111,15 @@ button, input { font-family: inherit; }
 .timeline-line { position: relative; }
 .timeline-line::before { content: ''; position: absolute; left: 15px; top: 26px; bottom: -8px; width: 2px; background: #242424; }
 .event-item:last-child .timeline-line::before { display: none; }
-.goal-box { padding: 14px; margin-bottom: 12px; }
-.goal-box h3 { color: var(--text-muted); margin-bottom: 6px; font-size: 12px; }
-.stat-grid { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 10px; }
+.greeting-box { padding: 14px; margin-bottom: 12px; }
+.greeting-title { font-size: 22px; font-weight: 700; line-height: 1.2; }
+.greeting-goal { margin-top: 6px; color: var(--text-muted); font-size: 13px; line-height: 1.4; }
+.stat-grid { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 10px; margin-bottom: 12px; }
+.insights-card { padding: 14px; margin-bottom: 12px; }
+.insights-card h3 { font-size: 13px; color: var(--text-muted); margin-bottom: 8px; }
+.insights-card p, .insights-card li { font-size: 13px; line-height: 1.45; }
+.insights-card ul { margin: 0; padding-left: 18px; display: grid; gap: 6px; }
+.muted { color: var(--text-muted); }
 .stat-card { padding: 12px; text-align: center; }
 .stat-card .number { font-size: 23px; font-weight: 700; }
 .stat-card .label { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
@@ -168,7 +174,7 @@ button, input { font-family: inherit; }
     <section class="panel active" id="panel-chat"><div class="chat-panel"><div class="chat-messages" id="chat-messages"><div class="msg system">Council is active. Agent actions are reviewed before execution.</div></div><div class="chat-input"><input type="text" id="chat-input" placeholder="Tell the agent what to do..." onkeydown="if(event.key==='Enter')sendMessage()"><button id="send-btn" onclick="sendMessage()">Send</button></div></div></section>
     <section class="panel" id="panel-approvals"><div class="approval-list" id="approval-list"><div class="approvals-refresh" id="approvals-refresh">Pull to refresh</div><div class="empty"><svg class="check-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m20 6-11 11-5-5"></path></svg><span>All clear — no actions pending</span></div></div></section>
     <section class="panel" id="panel-activity"><div class="activity-list" id="activity-list"><div class="activity-filters" id="activity-filters"><button class="filter-btn active" data-filter="all" onclick="setActivityFilter('all')">All</button><button class="filter-btn" data-filter="auto" onclick="setActivityFilter('auto')">Auto</button><button class="filter-btn" data-filter="flagged" onclick="setActivityFilter('flagged')">Flagged</button><button class="filter-btn" data-filter="blocked" onclick="setActivityFilter('blocked')">Blocked</button></div><div class="empty">No activity yet. Start chatting.</div></div></section>
-    <section class="panel" id="panel-insights"><div class="insights"><div class="goal-box"><h3>Current Goal</h3><p id="goal-text">Loading...</p></div><div class="stat-grid" id="stat-grid"></div></div></section>
+    <section class="panel" id="panel-insights"><div class="insights"><div class="greeting-box"><p class="greeting-title" id="greeting-text">Good day</p><p class="greeting-goal" id="goal-text">Goal: Loading...</p></div><div class="stat-grid" id="stat-grid"></div><section class="insights-card"><h3>Today's Summary</h3><p id="summary-text">Loading summary...</p></section><section class="insights-card"><h3>Suggestions</h3><div id="suggestions-list"><p class="muted">Loading suggestions...</p></div></section></div></section>
   </main>
   <nav class="bottom-nav" aria-label="Primary navigation">
     <button class="tab active" data-tab="chat" onclick="switchTab('chat')"><svg viewBox="0 0 24 24"><path d="M4 5h16v10H7l-3 3V5Z"></path></svg><span>Chat</span></button>
@@ -272,7 +278,82 @@ async function loadActivity() {
     list.innerHTML = `${filterBar}<div class="empty">Could not load activity feed.</div>`;
   }
 }
-async function loadInsights() { const [statsRes, goalRes] = await Promise.all([fetch('/api/insights'), fetch('/api/goal')]); const statsData = await statsRes.json(); const goalData = await goalRes.json(); document.getElementById('goal-text').textContent = goalData.goal; const s = statsData.stats; document.getElementById('stat-grid').innerHTML = `<div class="stat-card blue"><div class="number">${s.total_actions}</div><div class="label">Total actions</div></div><div class="stat-card green"><div class="number">${s.auto_executed}</div><div class="label">Auto</div></div><div class="stat-card green"><div class="number">${s.approved}</div><div class="label">Approved</div></div><div class="stat-card red"><div class="number">${s.blocked + s.rejected}</div><div class="label">Blocked/Rejected</div></div><div class="stat-card purple"><div class="number">${s.council_evaluations}</div><div class="label">Council evals</div></div><div class="stat-card blue"><div class="number">${s.avg_council_latency_ms}</div><div class="label">Avg latency</div></div>`; }
+async function loadInsights() {
+  const [statsRes, settingsRes, activityRes] = await Promise.all([
+    fetch('/api/insights'),
+    fetch('/api/settings'),
+    fetch('/api/activity')
+  ]);
+  const statsData = await statsRes.json();
+  const settingsData = await settingsRes.json();
+  const activityData = await activityRes.json();
+
+  const name = (settingsData.user_name || 'there').trim();
+  const goal = (settingsData.user_goal || statsData.goal || 'No goal set yet').trim();
+  document.getElementById('greeting-text').textContent = `${getTimeGreeting()}, ${name}`;
+  document.getElementById('goal-text').textContent = `Goal: ${goal}`;
+
+  const s = statsData.stats || {};
+  const blockedRejected = Number(s.blocked || 0) + Number(s.rejected || 0);
+  document.getElementById('stat-grid').innerHTML = `<div class="stat-card blue"><div class="number">${s.total_actions ?? 0}</div><div class="label">Total actions</div></div><div class="stat-card green"><div class="number">${s.auto_executed ?? 0}</div><div class="label">Auto-executed</div></div><div class="stat-card green"><div class="number">${s.approved ?? 0}</div><div class="label">Approved by you</div></div><div class="stat-card red"><div class="number">${blockedRejected}</div><div class="label">Blocked/Rejected</div></div><div class="stat-card purple"><div class="number">${s.council_evaluations ?? 0}</div><div class="label">Council evaluations</div></div><div class="stat-card blue"><div class="number">${formatLatency(s.avg_council_latency_ms)}</div><div class="label">Avg latency</div></div>`;
+
+  const events = activityData.events || [];
+  const summaryText = buildTodaySummary(events, s);
+  document.getElementById('summary-text').textContent = summaryText;
+
+  const suggestions = buildSuggestions(events, s);
+  const suggestionsList = document.getElementById('suggestions-list');
+  if (!suggestions.length) {
+    suggestionsList.innerHTML = '<p class="muted">No suggestions yet — keep using Council and we will surface automations here.</p>';
+  } else {
+    suggestionsList.innerHTML = `<ul>${suggestions.map(item => `<li>${escapeHtml(item)}</li>`).join('')}</ul>`;
+  }
+}
+
+function getTimeGreeting() {
+  const hour = new Date().getHours();
+  if (hour < 12) return 'Good morning';
+  if (hour < 18) return 'Good afternoon';
+  return 'Good evening';
+}
+
+function formatLatency(ms) {
+  const value = Number(ms || 0);
+  return `${Math.round(value)}ms`;
+}
+
+function buildTodaySummary(events, stats) {
+  const autoCount = Number(stats.auto_executed || 0);
+  const approvedCount = Number(stats.approved || 0);
+  const blockedCount = Number(stats.blocked || 0) + Number(stats.rejected || 0);
+  const total = Number(stats.total_actions || 0);
+  const notable = blockedCount > 0
+    ? `${blockedCount} actions were blocked or rejected and may need follow-up.`
+    : 'No blocked actions today.';
+  return `Today Council reviewed ${total} actions: ${autoCount} auto-executed, ${approvedCount} approved by you. ${notable}`;
+}
+
+function buildSuggestions(events, stats) {
+  const toolApprovals = {};
+  for (const e of events || []) {
+    if (e.event_type !== 'action_approved') continue;
+    const tool = e.details?.tool || 'this action type';
+    toolApprovals[tool] = (toolApprovals[tool] || 0) + 1;
+  }
+  const suggestions = [];
+  const repetitiveTool = Object.entries(toolApprovals).sort((a, b) => b[1] - a[1])[0];
+  if (repetitiveTool && repetitiveTool[1] >= 3) {
+    suggestions.push(`You've approved ${repetitiveTool[1]} ${repetitiveTool[0]} actions today. Want to auto-approve this pattern?`);
+  }
+  const blockedRejected = Number(stats.blocked || 0) + Number(stats.rejected || 0);
+  if (blockedRejected >= 2) {
+    suggestions.push('Several actions were blocked/rejected. Consider tightening your goal or updating your risk profile for clearer guardrails.');
+  }
+  if (!suggestions.length && Number(stats.total_actions || 0) >= 5) {
+    suggestions.push('Your approvals look consistent. You can likely auto-approve low-risk repeated actions to speed things up.');
+  }
+  return suggestions;
+}
 let settingsQuestions = [];
 async function openSettings() { const res = await fetch('/api/onboarding'); const data = await res.json(); settingsQuestions = data.questions || []; const current = data.current_profile || {}; document.getElementById('settings-questions').innerHTML = settingsQuestions.map(q => `<div class="q-group"><label>${escapeHtml(q.question)}</label>${q.options.map(o => `<label class="option"><input type="radio" name="${q.id}" value="${o.value}" ${current[q.id] === o.value ? 'checked' : ''}>${escapeHtml(o.label)}</label>`).join('')}</div>`).join(''); document.getElementById('settings-modal').classList.add('show'); }
 function closeSettings() { document.getElementById('settings-modal').classList.remove('show'); }

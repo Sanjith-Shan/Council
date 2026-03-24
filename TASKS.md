@@ -118,22 +118,22 @@
 - [x] Filter buttons at top: All, Auto, Flagged, Blocked
 - [x] Git commit: "feat: polished activity feed"
 
-### Task 10: Insights tab — stats dashboard
-- [ ] Top section: greeting "Good morning, [name]" with current goal displayed
-- [ ] Stat cards in a 2x3 grid:
+### Task 10: Insights tab — stats dashboard — completed 2026-03-24T10:44:27Z by cron
+- [x] Top section: greeting "Good morning, [name]" with current goal displayed
+- [x] Stat cards in a 2x3 grid:
   - Total actions (blue)
   - Auto-executed (green)
   - Approved by you (green)
   - Blocked/Rejected (red)
   - Council evaluations (purple)
   - Avg latency (blue)
-- [ ] Below stats: "Today's Summary" — auto-generated text summary of what the agent did
+- [x] Below stats: "Today's Summary" — auto-generated text summary of what the agent did
   - Count of actions per type
   - Any notable blocks or flags
-- [ ] Below summary: "Suggestions" section
+- [x] Below summary: "Suggestions" section
   - If user has approved many of the same action type, suggest promoting it
   - e.g., "You've approved 12 file reads today. Want to auto-approve those?"
-- [ ] Git commit: "feat: polished insights dashboard"
+- [x] Git commit: "feat: polished insights dashboard"
 
 ---
 
