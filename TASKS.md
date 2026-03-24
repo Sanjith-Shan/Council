@@ -35,11 +35,11 @@
 - [x] Test: restart server, verify data persists
 - [x] Git commit: "feat: persistent SQLite storage"
 
-### Task 3: Add user_goal and user_name to settings storage
-- [ ] Store user_goal in SQLite
-- [ ] Add user_name field (used in UI greeting)
-- [ ] Load on server startup
-- [ ] Add API endpoint: GET/POST /api/settings for all user settings
+### Task 3: Add user_goal and user_name to settings storage — completed 2026-03-24T08:24:05Z by cron
+- [x] Store user_goal in SQLite
+- [x] Add user_name field (used in UI greeting)
+- [x] Load on server startup
+- [x] Add API endpoint: GET/POST /api/settings for all user settings
 - [ ] Git commit: "feat: persistent settings"
 
 ### Task 4: Improve risk profile onboarding

@@ -41,6 +41,7 @@ tier_classifier = TierClassifier(db=db)
 audit_log = AuditLog(db=db)
 risk_profile = db.load_risk_profile() or RiskProfile()  # Default conservative
 user_goal = db.get_user_setting("user_goal", "Grow my online business and increase customer engagement")
+user_name = db.get_user_setting("user_name", "there")
 chat_history: list[dict] = []  # OpenAI message format
 
 
@@ -83,6 +84,10 @@ class ProfileAnswers(BaseModel):
 
 class GoalUpdate(BaseModel):
     goal: str
+
+class SettingsUpdate(BaseModel):
+    user_goal: str | None = None
+    user_name: str | None = None
 
 class EvaluateRequest(BaseModel):
     """Incoming tool call from OpenClaw/ClawBands for council evaluation."""
@@ -131,6 +136,28 @@ async def update_goal(req: GoalUpdate):
 @app.get("/api/goal")
 async def get_goal():
     return {"goal": user_goal}
+
+
+@app.get("/api/settings")
+async def get_settings():
+    """Return persisted user settings for UI consumption."""
+    return {"user_goal": user_goal, "user_name": user_name}
+
+
+@app.post("/api/settings")
+async def update_settings(req: SettingsUpdate):
+    """Update user settings (goal/name) with SQLite persistence."""
+    global user_goal, user_name
+
+    if req.user_goal is not None:
+        user_goal = req.user_goal
+        db.set_user_setting("user_goal", user_goal)
+
+    if req.user_name is not None:
+        user_name = req.user_name
+        db.set_user_setting("user_name", user_name)
+
+    return {"user_goal": user_goal, "user_name": user_name}
 
 
 @app.post("/api/chat")
