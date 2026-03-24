@@ -9,509 +9,166 @@
 <meta name="theme-color" content="#0a0a0a">
 <link rel="manifest" href="/static/manifest.json">
 <link rel="apple-touch-icon" href="/static/icons/icon-192.png">
-<title>Council — Verifiable Agent Autonomy Framework</title>
+<title>Council</title>
 <style>
 * { margin: 0; padding: 0; box-sizing: border-box; }
 :root {
-  --bg: #0f0f0f; --surface: #1a1a1a; --surface2: #242424; --surface3: #2e2e2e;
-  --text: #e8e8e8; --text2: #a0a0a0; --text3: #666;
-  --green: #22c55e; --green-bg: #14301e; --yellow: #eab308; --yellow-bg: #302a10;
-  --orange: #f97316; --orange-bg: #301e10; --red: #ef4444; --red-bg: #301414;
-  --blue: #3b82f6; --blue-bg: #141e30; --purple: #8b5cf6;
-  --border: #2a2a2a; --radius: 10px;
+  --bg: #0a0a0a;
+  --surface: #141414;
+  --surface2: #1e1e1e;
+  --text: #e8e8e8;
+  --text-muted: #888;
+  --accent: #3b82f6;
+  --success: #22c55e;
+  --warning: #eab308;
+  --danger: #ef4444;
+  --purple: #8b5cf6;
+  --radius-card: 12px;
+  --radius-btn: 8px;
+  --radius-pill: 24px;
+  --border: #2a2a2a;
 }
-body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); height: 100vh; display: flex; flex-direction: column; }
-button { cursor: pointer; border: none; font-family: inherit; }
-
-/* ── Top bar ── */
-.topbar { background: var(--surface); border-bottom: 1px solid var(--border); padding: 12px 20px; display: flex; align-items: center; gap: 12px; }
-.topbar h1 { font-size: 18px; font-weight: 600; }
-.topbar .tag { font-size: 11px; background: var(--purple); color: #fff; padding: 2px 8px; border-radius: 20px; }
-.topbar .settings-btn { margin-left: auto; background: var(--surface2); color: var(--text2); padding: 6px 14px; border-radius: 6px; font-size: 13px; }
-.topbar .settings-btn:hover { background: var(--surface3); }
-
-/* ── Tab bar ── */
-.tabs { display: flex; background: var(--surface); border-bottom: 1px solid var(--border); }
-.tab { flex: 1; padding: 12px; text-align: center; font-size: 13px; font-weight: 500; color: var(--text3); background: none; position: relative; transition: color .15s; }
-.tab:hover { color: var(--text2); }
-.tab.active { color: var(--text); }
-.tab.active::after { content: ''; position: absolute; bottom: 0; left: 20%; right: 20%; height: 2px; background: var(--blue); border-radius: 1px; }
-.tab .badge { position: absolute; top: 6px; right: calc(50% - 30px); background: var(--orange); color: #fff; font-size: 10px; padding: 1px 6px; border-radius: 10px; display: none; }
-
-/* ── Content panels ── */
-.content { flex: 1; overflow: hidden; display: flex; flex-direction: column; }
-.panel { display: none; flex: 1; flex-direction: column; overflow: hidden; }
-.panel.active { display: flex; }
-
-/* ── Chat panel ── */
-.chat-messages { flex: 1; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 12px; }
-.msg { max-width: 80%; padding: 10px 14px; border-radius: var(--radius); font-size: 14px; line-height: 1.5; }
-.msg.user { align-self: flex-end; background: var(--blue); color: #fff; }
-.msg.agent { align-self: flex-start; background: var(--surface2); }
-.msg.system { align-self: center; background: var(--surface3); color: var(--text2); font-size: 12px; text-align: center; max-width: 90%; }
+html, body { height: 100%; overflow: hidden; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif; color: var(--text); background: var(--bg); }
+button, input { font-family: inherit; }
+.app { height: 100%; display: flex; flex-direction: column; max-width: 100vw; overflow: hidden; }
+.topbar {
+  position: sticky; top: 0; z-index: 20; background: var(--surface); border-bottom: 1px solid var(--border);
+  padding: calc(env(safe-area-inset-top) + 10px) 14px 10px; display: flex; align-items: center; justify-content: space-between;
+}
+.brand { font-size: 19px; font-weight: 700; letter-spacing: 0.2px; }
+.settings-btn { width: 44px; height: 44px; border: 1px solid var(--border); border-radius: 50%; background: var(--surface2); color: var(--text); display: grid; place-items: center; cursor: pointer; }
+.settings-btn svg { width: 18px; height: 18px; }
+.content { flex: 1; min-height: 0; overflow: hidden; padding-bottom: calc(78px + env(safe-area-inset-bottom)); }
+.panel { display: none; height: 100%; overflow: hidden; }
+.panel.active { display: block; }
+.chat-panel { display: flex; flex-direction: column; height: 100%; }
+.chat-messages, .approval-list, .activity-list, .insights { height: 100%; overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 14px; }
+.msg { max-width: 84%; padding: 10px 12px; border-radius: 12px; font-size: 14px; line-height: 1.45; margin-bottom: 10px; word-wrap: break-word; animation: fadeUp .18s ease; }
+.msg.user { margin-left: auto; background: var(--accent); color: #fff; }
+.msg.agent { background: var(--surface2); border: 1px solid var(--border); }
+.msg.system { margin: 8px auto; background: #1a1a1a; color: var(--text-muted); text-align: center; max-width: 95%; font-size: 12px; }
 .msg pre { white-space: pre-wrap; font-family: inherit; }
-.action-card { margin-top: 8px; padding: 8px 10px; border-radius: 6px; font-size: 12px; border-left: 3px solid; }
-.action-card.auto { border-color: var(--green); background: var(--green-bg); }
-.action-card.notify { border-color: var(--yellow); background: var(--yellow-bg); }
-.action-card.approve { border-color: var(--orange); background: var(--orange-bg); }
-.action-card.blocked { border-color: var(--red); background: var(--red-bg); }
-.action-card .tier-label { font-weight: 600; text-transform: uppercase; font-size: 10px; letter-spacing: 0.5px; }
-.council-votes { margin-top: 6px; display: flex; gap: 6px; flex-wrap: wrap; }
-.vote-chip { font-size: 11px; padding: 2px 8px; border-radius: 4px; }
-.vote-chip.APPROVE { background: var(--green-bg); color: var(--green); }
-.vote-chip.FLAG { background: var(--orange-bg); color: var(--orange); }
-.vote-chip.BLOCK { background: var(--red-bg); color: var(--red); }
-
-.chat-input { display: flex; gap: 8px; padding: 12px 16px; border-top: 1px solid var(--border); background: var(--surface); }
-.chat-input input { flex: 1; background: var(--surface2); border: 1px solid var(--border); color: var(--text); padding: 10px 14px; border-radius: 8px; font-size: 14px; outline: none; }
-.chat-input input:focus { border-color: var(--blue); }
-.chat-input button { background: var(--blue); color: #fff; padding: 10px 20px; border-radius: 8px; font-size: 14px; font-weight: 500; }
-.chat-input button:disabled { opacity: 0.5; cursor: not-allowed; }
-
-/* ── Approval panel ── */
-.approval-list { flex: 1; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 12px; }
-.approval-item { background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px; }
-.approval-item h3 { font-size: 14px; font-weight: 500; margin-bottom: 4px; }
-.approval-item .meta { font-size: 12px; color: var(--text2); margin-bottom: 8px; }
-.approval-item .votes { display: flex; gap: 6px; margin-bottom: 10px; flex-wrap: wrap; }
-.approval-item .vote { font-size: 11px; padding: 3px 8px; border-radius: 4px; }
+@keyframes fadeUp { from { opacity: .2; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+.action-card { margin-top: 8px; padding: 8px 10px; border-radius: 10px; font-size: 12px; border-left: 4px solid; }
+.action-card.auto { border-color: var(--success); background: #132417; }
+.action-card.notify { border-color: var(--warning); background: #2a230d; }
+.action-card.approve { border-color: #f97316; background: #2a1a0f; }
+.action-card.blocked { border-color: var(--danger); background: #2a1212; }
+.tier-label { font-size: 10px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.4px; margin-bottom: 3px; }
+.council-votes { margin-top: 6px; display: flex; flex-wrap: wrap; gap: 6px; }
+.vote-chip { border-radius: var(--radius-pill); padding: 2px 8px; font-size: 11px; }
+.vote-chip.APPROVE { background: #16351f; color: var(--success); }
+.vote-chip.FLAG { background: #36250e; color: #f59e0b; }
+.vote-chip.BLOCK { background: #3a1313; color: var(--danger); }
+.chat-input { position: sticky; bottom: 0; background: var(--surface); border-top: 1px solid var(--border); padding: 10px 12px calc(10px + env(safe-area-inset-bottom)); display: flex; gap: 8px; }
+.chat-input input { flex: 1; min-height: 44px; border-radius: var(--radius-pill); border: 1px solid var(--border); background: var(--surface2); color: var(--text); padding: 10px 14px; font-size: 14px; outline: none; }
+.chat-input input:focus { border-color: var(--accent); }
+.chat-input button { min-height: 44px; padding: 0 16px; border-radius: var(--radius-pill); border: none; background: var(--accent); color: #fff; font-weight: 600; }
+.approval-item, .stat-card, .goal-box { background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius-card); }
+.approval-item { padding: 12px; margin-bottom: 10px; }
+.approval-item h3 { font-size: 14px; margin-bottom: 5px; }
+.meta { font-size: 12px; color: var(--text-muted); margin-bottom: 8px; }
 .approval-btns { display: flex; gap: 8px; }
-.btn-approve { background: var(--green); color: #fff; padding: 6px 16px; border-radius: 6px; font-size: 13px; }
-.btn-reject { background: var(--red); color: #fff; padding: 6px 16px; border-radius: 6px; font-size: 13px; }
-.empty { text-align: center; color: var(--text3); padding: 60px 20px; font-size: 14px; }
-
-/* ── Activity panel ── */
-.activity-list { flex: 1; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 6px; }
-.event-row { display: flex; align-items: flex-start; gap: 10px; padding: 8px 10px; border-radius: 6px; font-size: 13px; }
-.event-dot { width: 8px; height: 8px; border-radius: 50%; margin-top: 5px; flex-shrink: 0; }
-.event-dot.green { background: var(--green); }
-.event-dot.yellow { background: var(--yellow); }
-.event-dot.orange { background: var(--orange); }
-.event-dot.red { background: var(--red); }
-.event-dot.blue { background: var(--blue); }
-.event-dot.gray { background: var(--text3); }
-.event-text { flex: 1; }
-.event-time { color: var(--text3); font-size: 11px; flex-shrink: 0; }
-
-/* ── Insights panel ── */
-.insights { flex: 1; overflow-y: auto; padding: 20px; }
-.stat-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; margin-bottom: 20px; }
-.stat-card { background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px; text-align: center; }
-.stat-card .number { font-size: 28px; font-weight: 600; }
-.stat-card .label { font-size: 12px; color: var(--text2); margin-top: 4px; }
-.stat-card.green .number { color: var(--green); }
-.stat-card.yellow .number { color: var(--yellow); }
-.stat-card.orange .number { color: var(--orange); }
-.stat-card.red .number { color: var(--red); }
-.stat-card.blue .number { color: var(--blue); }
+.btn-approve, .btn-reject { min-height: 38px; border: none; border-radius: var(--radius-btn); color: #fff; font-weight: 600; padding: 0 14px; }
+.btn-approve { background: var(--success); }
+.btn-reject { background: var(--danger); }
+.empty { text-align: center; color: var(--text-muted); padding: 48px 16px; }
+.event-row { display: flex; gap: 10px; align-items: flex-start; padding: 10px; border-radius: 10px; background: #121212; margin-bottom: 8px; }
+.event-dot { width: 8px; height: 8px; border-radius: 50%; margin-top: 6px; }
+.event-dot.green { background: var(--success); }
+.event-dot.yellow { background: var(--warning); }
+.event-dot.orange { background: #f97316; }
+.event-dot.red { background: var(--danger); }
+.event-dot.blue { background: var(--accent); }
+.event-dot.gray { background: #6b7280; }
+.event-text { flex: 1; font-size: 13px; }
+.event-time { color: var(--text-muted); font-size: 11px; }
+.goal-box { padding: 14px; margin-bottom: 12px; }
+.goal-box h3 { color: var(--text-muted); margin-bottom: 6px; font-size: 12px; }
+.stat-grid { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 10px; }
+.stat-card { padding: 12px; text-align: center; }
+.stat-card .number { font-size: 23px; font-weight: 700; }
+.stat-card .label { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+.stat-card.green .number { color: var(--success); }
+.stat-card.yellow .number { color: var(--warning); }
+.stat-card.orange .number { color: #f59e0b; }
+.stat-card.red .number { color: var(--danger); }
+.stat-card.blue .number { color: var(--accent); }
 .stat-card.purple .number { color: var(--purple); }
-.goal-box { background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px; }
-.goal-box h3 { font-size: 13px; color: var(--text2); margin-bottom: 6px; }
-.goal-box p { font-size: 15px; }
-
-/* ── Settings modal ── */
-.modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 100; align-items: center; justify-content: center; }
-.modal-overlay.show { display: flex; }
-.modal { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; width: 90%; max-width: 500px; max-height: 80vh; overflow-y: auto; padding: 24px; }
-.modal h2 { font-size: 18px; margin-bottom: 16px; }
-.modal .q-group { margin-bottom: 16px; }
-.modal .q-group label { display: block; font-size: 14px; margin-bottom: 8px; font-weight: 500; }
-.modal .option { display: flex; align-items: center; gap: 8px; padding: 8px; border-radius: 6px; cursor: pointer; font-size: 13px; }
-.modal .option:hover { background: var(--surface2); }
-.modal .option input { accent-color: var(--blue); }
-.modal .save-btn { background: var(--blue); color: #fff; padding: 10px 24px; border-radius: 8px; font-size: 14px; width: 100%; margin-top: 12px; }
-.modal .close-btn { background: var(--surface2); color: var(--text2); padding: 8px 16px; border-radius: 6px; font-size: 13px; float: right; }
-.loading { display: inline-block; width: 16px; height: 16px; border: 2px solid var(--text3); border-top-color: var(--blue); border-radius: 50%; animation: spin .6s linear infinite; }
+.bottom-nav {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 40;
+  height: calc(64px + env(safe-area-inset-bottom)); padding-bottom: env(safe-area-inset-bottom);
+  background: rgba(20,20,20,.98); border-top: 1px solid var(--border); display: grid; grid-template-columns: repeat(4, 1fr);
+}
+.tab { border: none; background: transparent; color: var(--text-muted); min-height: 64px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; font-size: 11px; position: relative; }
+.tab svg { width: 20px; height: 20px; stroke: currentColor; fill: none; stroke-width: 2; }
+.tab.active { color: var(--accent); }
+.tab .badge {
+  position: absolute; right: calc(50% - 26px); top: 8px; min-width: 18px; height: 18px; border-radius: 999px;
+  background: var(--danger); color: #fff; font-size: 10px; display: none; align-items: center; justify-content: center; padding: 0 5px;
+}
+.modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.55); z-index: 60; display: none; }
+.modal-overlay.show { display: block; }
+.modal {
+  position: absolute; left: 0; right: 0; bottom: 0; max-height: 86vh; overflow-y: auto;
+  background: var(--surface); border-top-left-radius: 18px; border-top-right-radius: 18px; border-top: 1px solid var(--border);
+  padding: 12px 14px calc(14px + env(safe-area-inset-bottom)); transform: translateY(100%); transition: transform .2s ease;
+}
+.modal-overlay.show .modal { transform: translateY(0); }
+.modal-handle { width: 42px; height: 4px; border-radius: 999px; background: #3a3a3a; margin: 2px auto 12px; }
+.modal h2 { font-size: 18px; margin-bottom: 10px; }
+.close-btn { float: right; border: none; background: transparent; color: var(--text-muted); font-size: 22px; line-height: 1; padding: 2px 6px; cursor: pointer; }
+.q-group { margin-bottom: 14px; }
+.q-group label { display: block; font-size: 13px; margin-bottom: 6px; }
+.option { display: flex; gap: 8px; align-items: center; padding: 8px; border-radius: 10px; background: #161616; margin-bottom: 6px; }
+.option input { accent-color: var(--accent); }
+.save-btn { width: 100%; min-height: 44px; border: none; border-radius: var(--radius-btn); background: var(--accent); color: #fff; font-weight: 600; margin-top: 8px; }
+.loading { display: inline-block; width: 14px; height: 14px; border: 2px solid #5f5f5f; border-top-color: var(--accent); border-radius: 50%; animation: spin .7s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
 </style>
 </head>
 <body>
-
-<div class="topbar">
-  <h1>Council</h1>
-  <span class="tag">prototype</span>
-  <button class="settings-btn" onclick="openSettings()">⚙ Settings</button>
+<div class="app">
+  <header class="topbar">
+    <div class="brand">Council</div>
+    <button class="settings-btn" onclick="openSettings()" aria-label="Open settings">
+      <svg viewBox="0 0 24 24"><path d="M12 8.5a3.5 3.5 0 1 0 0 7 3.5 3.5 0 0 0 0-7Z"></path><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.87l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06A1.7 1.7 0 0 0 15 19.4a1.7 1.7 0 0 0-1 .54 1.7 1.7 0 0 0-.4 1.1V21a2 2 0 0 1-4 0v-.08a1.7 1.7 0 0 0-.4-1.1 1.7 1.7 0 0 0-1-.54 1.7 1.7 0 0 0-1.87.34l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.7 1.7 0 0 0 4.6 15a1.7 1.7 0 0 0-.54-1 1.7 1.7 0 0 0-1.1-.4H2.9a2 2 0 0 1 0-4h.08a1.7 1.7 0 0 0 1.1-.4 1.7 1.7 0 0 0 .54-1 1.7 1.7 0 0 0-.34-1.87l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.7 1.7 0 0 0 9 4.6a1.7 1.7 0 0 0 1-.54 1.7 1.7 0 0 0 .4-1.1V2.9a2 2 0 0 1 4 0v.08a1.7 1.7 0 0 0 .4 1.1 1.7 1.7 0 0 0 1 .54 1.7 1.7 0 0 0 1.87-.34l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.7 1.7 0 0 0 19.4 9c.25.3.43.65.54 1 .11.36.16.74.16 1.13s-.05.77-.16 1.13a2.8 2.8 0 0 1-.54 1Z"></path></svg>
+    </button>
+  </header>
+  <main class="content">
+    <section class="panel active" id="panel-chat"><div class="chat-panel"><div class="chat-messages" id="chat-messages"><div class="msg system">Council is active. Agent actions are reviewed before execution.</div></div><div class="chat-input"><input type="text" id="chat-input" placeholder="Tell the agent what to do..." onkeydown="if(event.key==='Enter')sendMessage()"><button id="send-btn" onclick="sendMessage()">Send</button></div></div></section>
+    <section class="panel" id="panel-approvals"><div class="approval-list" id="approval-list"><div class="empty">All clear — no actions pending</div></div></section>
+    <section class="panel" id="panel-activity"><div class="activity-list" id="activity-list"><div class="empty">No activity yet. Start chatting.</div></div></section>
+    <section class="panel" id="panel-insights"><div class="insights"><div class="goal-box"><h3>Current Goal</h3><p id="goal-text">Loading...</p></div><div class="stat-grid" id="stat-grid"></div></div></section>
+  </main>
+  <nav class="bottom-nav" aria-label="Primary navigation">
+    <button class="tab active" data-tab="chat" onclick="switchTab('chat')"><svg viewBox="0 0 24 24"><path d="M4 5h16v10H7l-3 3V5Z"></path></svg><span>Chat</span></button>
+    <button class="tab" data-tab="approvals" onclick="switchTab('approvals')"><svg viewBox="0 0 24 24"><path d="m20 6-11 11-5-5"></path></svg><span>Approvals</span><span class="badge" id="approval-badge">0</span></button>
+    <button class="tab" data-tab="activity" onclick="switchTab('activity')"><svg viewBox="0 0 24 24"><path d="M3 12h4l2-5 4 10 2-5h6"></path></svg><span>Activity</span></button>
+    <button class="tab" data-tab="insights" onclick="switchTab('insights')"><svg viewBox="0 0 24 24"><path d="M4 19h16"></path><path d="M7 15V9"></path><path d="M12 15V5"></path><path d="M17 15v-3"></path></svg><span>Insights</span></button>
+  </nav>
 </div>
-
-<div class="tabs">
-  <button class="tab active" data-tab="chat" onclick="switchTab('chat')">💬 Chat</button>
-  <button class="tab" data-tab="approvals" onclick="switchTab('approvals')">✅ Approvals <span class="badge" id="approval-badge">0</span></button>
-  <button class="tab" data-tab="activity" onclick="switchTab('activity')">📡 Activity</button>
-  <button class="tab" data-tab="insights" onclick="switchTab('insights')">📊 Insights</button>
-</div>
-
-<div class="content">
-  <!-- CHAT -->
-  <div class="panel active" id="panel-chat">
-    <div class="chat-messages" id="chat-messages">
-      <div class="msg system">Council is active. Your agent's actions will be evaluated by the Review Council before execution. Type a message to start.</div>
-    </div>
-    <div class="chat-input">
-      <input type="text" id="chat-input" placeholder="Tell the agent what to do..." onkeydown="if(event.key==='Enter')sendMessage()">
-      <button id="send-btn" onclick="sendMessage()">Send</button>
-    </div>
-  </div>
-
-  <!-- APPROVALS -->
-  <div class="panel" id="panel-approvals">
-    <div class="approval-list" id="approval-list">
-      <div class="empty">No actions pending approval</div>
-    </div>
-  </div>
-
-  <!-- ACTIVITY -->
-  <div class="panel" id="panel-activity">
-    <div class="activity-list" id="activity-list">
-      <div class="empty">No activity yet. Start chatting with the agent.</div>
-    </div>
-  </div>
-
-  <!-- INSIGHTS -->
-  <div class="panel" id="panel-insights">
-    <div class="insights" id="insights-content">
-      <div class="goal-box" style="margin-bottom:16px">
-        <h3>Current Goal</h3>
-        <p id="goal-text">Loading...</p>
-      </div>
-      <div class="stat-grid" id="stat-grid"></div>
-    </div>
-  </div>
-</div>
-
-<!-- Settings modal -->
-<div class="modal-overlay" id="settings-modal">
-  <div class="modal">
-    <button class="close-btn" onclick="closeSettings()">✕ Close</button>
-    <h2>Risk Profile Settings</h2>
-    <div id="settings-questions"></div>
-    <button class="save-btn" onclick="saveProfile()">Save Profile</button>
-  </div>
-</div>
-
+<div class="modal-overlay" id="settings-modal" onclick="if(event.target===this)closeSettings()"><div class="modal" role="dialog" aria-label="Settings"><div class="modal-handle"></div><button class="close-btn" onclick="closeSettings()">×</button><h2>Risk Profile Settings</h2><div id="settings-questions"></div><button class="save-btn" onclick="saveProfile()">Save Profile</button></div></div>
 <script>
-// ── State ──
-let pendingCount = 0;
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/static/sw.js').catch((err) => {
-      console.warn('Service worker registration failed:', err);
-    });
-  });
-}
-
-
-
-// ── Tab switching ──
-function switchTab(tab) {
-  document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === tab));
-  document.querySelectorAll('.panel').forEach(p => p.classList.toggle('active', p.id === `panel-${tab}`));
-  if (tab === 'approvals') loadApprovals();
-  if (tab === 'activity') loadActivity();
-  if (tab === 'insights') loadInsights();
-}
-
-// ── Chat ──
-async function sendMessage() {
-  const input = document.getElementById('chat-input');
-  const msg = input.value.trim();
-  if (!msg) return;
-  input.value = '';
-
-  addChatMsg('user', msg);
-  document.getElementById('send-btn').disabled = true;
-  addChatMsg('system', '<span class="loading"></span> Agent is thinking...');
-
-  try {
-    const res = await fetch('/api/chat', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ message: msg }),
-    });
-    // Remove loading message
-    const msgs = document.getElementById('chat-messages');
-    const lastSystem = msgs.querySelector('.msg.system:last-child');
-    if (lastSystem && lastSystem.innerHTML.includes('loading')) lastSystem.remove();
-
-    if (!res.ok) {
-      const err = await res.json();
-      addChatMsg('system', `Error: ${err.detail || 'Unknown error'}`);
-      return;
-    }
-
-    const data = await res.json();
-
-    // Show agent text
-    if (data.agent_text) {
-      addChatMsg('agent', data.agent_text);
-    }
-
-    // Show action cards
-    if (data.actions && data.actions.length > 0) {
-      let html = '';
-      for (const a of data.actions) {
-        const tierClass = getTierClass(a.tier);
-        const tierLabel = getTierLabel(a.tier);
-        html += `<div class="action-card ${tierClass}">`;
-        html += `<div class="tier-label">${tierLabel}${a.first_use_escalated ? ' (first use)' : ''}</div>`;
-        html += `<div>${a.description}</div>`;
-        if (a.council) {
-          html += `<div class="council-votes">`;
-          for (const v of a.council.votes) {
-            html += `<span class="vote-chip ${v.verdict}" title="${v.reason}">`;
-            html += `${v.checker}: ${v.verdict}`;
-            html += `</span>`;
-          }
-          html += `<span style="font-size:10px;color:var(--text3)">${a.council.total_latency_ms}ms</span>`;
-          html += `</div>`;
-        }
-        if (a.execution_result) {
-          html += `<div style="margin-top:4px;color:var(--text2);font-size:11px">${a.execution_result}</div>`;
-        }
-        if (a.status === 'pending_approval') {
-          html += `<div style="margin-top:4px;color:var(--orange);font-size:11px">⏳ Awaiting your approval</div>`;
-        }
-        if (a.status === 'blocked') {
-          html += `<div style="margin-top:4px;color:var(--red);font-size:11px">🚫 Blocked by safety council</div>`;
-        }
-        html += `</div>`;
-      }
-      addChatMsg('agent', html, true);
-    }
-
-    // Update approval badge
-    await updateApprovalBadge();
-
-  } catch (e) {
-    const msgs = document.getElementById('chat-messages');
-    const lastSystem = msgs.querySelector('.msg.system:last-child');
-    if (lastSystem && lastSystem.innerHTML.includes('loading')) lastSystem.remove();
-    addChatMsg('system', `Error: ${e.message}`);
-  } finally {
-    document.getElementById('send-btn').disabled = false;
-    document.getElementById('chat-input').focus();
-  }
-}
-
-function addChatMsg(role, content, isHtml = false) {
-  const msgs = document.getElementById('chat-messages');
-  const div = document.createElement('div');
-  div.className = `msg ${role}`;
-  if (isHtml) div.innerHTML = content;
-  else div.innerHTML = `<pre>${escapeHtml(content)}</pre>`;
-  msgs.appendChild(div);
-  msgs.scrollTop = msgs.scrollHeight;
-}
-
-// ── Approvals ──
-async function loadApprovals() {
-  try {
-    const res = await fetch('/api/approvals');
-    const data = await res.json();
-    const list = document.getElementById('approval-list');
-
-    if (!data.pending || data.pending.length === 0) {
-      list.innerHTML = '<div class="empty">No actions pending approval</div>';
-      return;
-    }
-
-    list.innerHTML = data.pending.map(a => `
-      <div class="approval-item" id="approval-${a.id}">
-        <h3>${escapeHtml(a.description)}</h3>
-        <div class="meta">Tool: ${a.tool_name} · ${a.first_use_escalated ? '🆕 First use of this tool · ' : ''}${new Date(a.timestamp).toLocaleTimeString()}</div>
-        ${a.council ? `<div class="votes">${a.council.votes.map(v => `
-          <span class="vote vote-chip ${v.verdict}" title="${escapeHtml(v.reason)}">${v.checker}: ${v.verdict}</span>
-        `).join('')}<span style="font-size:10px;color:var(--text3)">${a.council.total_latency_ms}ms</span></div>` : ''}
-        ${a.council ? `<div style="font-size:12px;color:var(--text2);margin-bottom:8px">${a.council.votes.map(v => `<div>• ${v.checker}: ${escapeHtml(v.reason)}</div>`).join('')}</div>` : ''}
-        <div class="approval-btns">
-          <button class="btn-approve" onclick="handleApproval('${a.id}', true)">✓ Approve</button>
-          <button class="btn-reject" onclick="handleApproval('${a.id}', false)">✕ Reject</button>
-        </div>
-      </div>
-    `).join('');
-  } catch (e) {
-    console.error('Failed to load approvals:', e);
-  }
-}
-
-async function handleApproval(actionId, approved) {
-  try {
-    const res = await fetch('/api/approve', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action_id: actionId, approved }),
-    });
-    const data = await res.json();
-
-    // Remove from list
-    const el = document.getElementById(`approval-${actionId}`);
-    if (el) {
-      el.style.opacity = '0.5';
-      el.innerHTML = `<div style="text-align:center;padding:10px;color:${approved ? 'var(--green)' : 'var(--red)'}">
-        ${approved ? '✓ Approved' : '✕ Rejected'}${data.result ? ': ' + escapeHtml(data.result) : ''}
-      </div>`;
-      setTimeout(() => { el.remove(); loadApprovals(); }, 1500);
-    }
-
-    await updateApprovalBadge();
-  } catch (e) {
-    console.error('Approval failed:', e);
-  }
-}
-
-async function updateApprovalBadge() {
-  try {
-    const res = await fetch('/api/approvals');
-    const data = await res.json();
-    const count = data.pending?.length || 0;
-    const badge = document.getElementById('approval-badge');
-    badge.textContent = count;
-    badge.style.display = count > 0 ? 'inline' : 'none';
-  } catch (e) {}
-}
-
-// ── Activity Feed ──
-async function loadActivity() {
-  try {
-    const res = await fetch('/api/activity');
-    const data = await res.json();
-    const list = document.getElementById('activity-list');
-
-    if (!data.events || data.events.length === 0) {
-      list.innerHTML = '<div class="empty">No activity yet. Start chatting with the agent.</div>';
-      return;
-    }
-
-    list.innerHTML = data.events.map(e => {
-      const dotColor = getDotColor(e);
-      const time = new Date(e.timestamp).toLocaleTimeString();
-      return `<div class="event-row">
-        <span class="event-dot ${dotColor}"></span>
-        <span class="event-text">${escapeHtml(e.summary)}</span>
-        <span class="event-time">${time}</span>
-      </div>`;
-    }).join('');
-  } catch (e) {
-    console.error('Failed to load activity:', e);
-  }
-}
-
-// ── Insights ──
-async function loadInsights() {
-  try {
-    const [statsRes, goalRes] = await Promise.all([
-      fetch('/api/insights'),
-      fetch('/api/goal'),
-    ]);
-    const statsData = await statsRes.json();
-    const goalData = await goalRes.json();
-
-    document.getElementById('goal-text').textContent = goalData.goal;
-
-    const s = statsData.stats;
-    const grid = document.getElementById('stat-grid');
-    grid.innerHTML = `
-      <div class="stat-card blue"><div class="number">${s.total_actions}</div><div class="label">Total actions</div></div>
-      <div class="stat-card green"><div class="number">${s.auto_executed}</div><div class="label">Auto-executed</div></div>
-      <div class="stat-card yellow"><div class="number">${s.notified}</div><div class="label">Notified</div></div>
-      <div class="stat-card orange"><div class="number">${s.pending_approval}</div><div class="label">Pending</div></div>
-      <div class="stat-card green"><div class="number">${s.approved}</div><div class="label">Approved</div></div>
-      <div class="stat-card red"><div class="number">${s.blocked + s.rejected}</div><div class="label">Blocked/Rejected</div></div>
-      <div class="stat-card purple"><div class="number">${s.council_evaluations}</div><div class="label">Council evals</div></div>
-      <div class="stat-card blue"><div class="number">${s.avg_council_latency_ms}</div><div class="label">Avg latency (ms)</div></div>
-      <div class="stat-card orange"><div class="number">${s.first_use_escalations}</div><div class="label">First-use flags</div></div>
-    `;
-  } catch (e) {
-    console.error('Failed to load insights:', e);
-  }
-}
-
-// ── Settings ──
+if ('serviceWorker' in navigator) { window.addEventListener('load', () => navigator.serviceWorker.register('/static/sw.js').catch(() => {})); }
+function switchTab(tab) { document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === tab)); document.querySelectorAll('.panel').forEach(p => p.classList.toggle('active', p.id === `panel-${tab}`)); if (tab === 'approvals') loadApprovals(); if (tab === 'activity') loadActivity(); if (tab === 'insights') loadInsights(); }
+async function sendMessage() { const input = document.getElementById('chat-input'); const msg = input.value.trim(); if (!msg) return; input.value = ''; addChatMsg('user', msg); document.getElementById('send-btn').disabled = true; addChatMsg('system', '<span class="loading"></span> Agent is thinking...'); try { const res = await fetch('/api/chat', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ message: msg }) }); const msgs = document.getElementById('chat-messages'); const lastSystem = msgs.querySelector('.msg.system:last-child'); if (lastSystem && lastSystem.innerHTML.includes('loading')) lastSystem.remove(); if (!res.ok) { const err = await res.json(); addChatMsg('system', `Error: ${err.detail || 'Unknown error'}`); return; } const data = await res.json(); if (data.agent_text) addChatMsg('agent', data.agent_text); if (data.actions?.length) { let html = ''; for (const a of data.actions) { html += `<div class="action-card ${getTierClass(a.tier)}"><div class="tier-label">${getTierLabel(a.tier)}${a.first_use_escalated ? ' (first use)' : ''}</div><div>${escapeHtml(a.description)}</div>`; if (a.council) { html += `<div class="council-votes">`; for (const v of a.council.votes) html += `<span class="vote-chip ${v.verdict}" title="${escapeHtml(v.reason)}">${v.checker}: ${v.verdict}</span>`; html += `<span style="font-size:10px;color:var(--text-muted)">${a.council.total_latency_ms}ms</span></div>`; } html += `</div>`; } addChatMsg('agent', html, true); } await updateApprovalBadge(); } catch (e) { const msgs = document.getElementById('chat-messages'); const lastSystem = msgs.querySelector('.msg.system:last-child'); if (lastSystem && lastSystem.innerHTML.includes('loading')) lastSystem.remove(); addChatMsg('system', `Error: ${e.message}`); } finally { document.getElementById('send-btn').disabled = false; document.getElementById('chat-input').focus(); } }
+function addChatMsg(role, content, isHtml = false) { const msgs = document.getElementById('chat-messages'); const div = document.createElement('div'); div.className = `msg ${role}`; div.innerHTML = isHtml ? content : `<pre>${escapeHtml(content)}</pre>`; msgs.appendChild(div); msgs.scrollTop = msgs.scrollHeight; }
+async function loadApprovals() { const res = await fetch('/api/approvals'); const data = await res.json(); const list = document.getElementById('approval-list'); if (!data.pending?.length) { list.innerHTML = '<div class="empty">All clear — no actions pending</div>'; return; } list.innerHTML = data.pending.map(a => `<div class="approval-item" id="approval-${a.id}"><h3>${escapeHtml(a.description)}</h3><div class="meta">Tool: ${a.tool_name} · ${new Date(a.timestamp).toLocaleTimeString()}</div><div class="approval-btns"><button class="btn-approve" onclick="handleApproval('${a.id}', true)">Approve</button><button class="btn-reject" onclick="handleApproval('${a.id}', false)">Reject</button></div></div>`).join(''); }
+async function handleApproval(actionId, approved) { await fetch('/api/approve', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action_id: actionId, approved }) }); await loadApprovals(); await updateApprovalBadge(); }
+async function updateApprovalBadge() { const res = await fetch('/api/approvals'); const data = await res.json(); const count = data.pending?.length || 0; const badge = document.getElementById('approval-badge'); badge.textContent = count; badge.style.display = count > 0 ? 'flex' : 'none'; }
+async function loadActivity() { const res = await fetch('/api/activity'); const data = await res.json(); const list = document.getElementById('activity-list'); if (!data.events?.length) { list.innerHTML = '<div class="empty">No activity yet. Start chatting.</div>'; return; } list.innerHTML = data.events.map(e => `<div class="event-row"><span class="event-dot ${getDotColor(e)}"></span><span class="event-text">${escapeHtml(e.summary)}</span><span class="event-time">${new Date(e.timestamp).toLocaleTimeString()}</span></div>`).join(''); }
+async function loadInsights() { const [statsRes, goalRes] = await Promise.all([fetch('/api/insights'), fetch('/api/goal')]); const statsData = await statsRes.json(); const goalData = await goalRes.json(); document.getElementById('goal-text').textContent = goalData.goal; const s = statsData.stats; document.getElementById('stat-grid').innerHTML = `<div class="stat-card blue"><div class="number">${s.total_actions}</div><div class="label">Total actions</div></div><div class="stat-card green"><div class="number">${s.auto_executed}</div><div class="label">Auto</div></div><div class="stat-card green"><div class="number">${s.approved}</div><div class="label">Approved</div></div><div class="stat-card red"><div class="number">${s.blocked + s.rejected}</div><div class="label">Blocked/Rejected</div></div><div class="stat-card purple"><div class="number">${s.council_evaluations}</div><div class="label">Council evals</div></div><div class="stat-card blue"><div class="number">${s.avg_council_latency_ms}</div><div class="label">Avg latency</div></div>`; }
 let settingsQuestions = [];
-async function openSettings() {
-  try {
-    const res = await fetch('/api/onboarding');
-    const data = await res.json();
-    settingsQuestions = data.questions;
-    const current = data.current_profile;
-
-    const container = document.getElementById('settings-questions');
-    container.innerHTML = data.questions.map(q => `
-      <div class="q-group">
-        <label>${escapeHtml(q.question)}</label>
-        ${q.options.map(o => `
-          <label class="option">
-            <input type="radio" name="${q.id}" value="${o.value}" ${current[q.id] === o.value ? 'checked' : ''}>
-            ${escapeHtml(o.label)}
-          </label>
-        `).join('')}
-      </div>
-    `).join('');
-
-    document.getElementById('settings-modal').classList.add('show');
-  } catch (e) {
-    console.error('Settings load failed:', e);
-  }
-}
-
-function closeSettings() {
-  document.getElementById('settings-modal').classList.remove('show');
-}
-
-async function saveProfile() {
-  const answers = {};
-  for (const q of settingsQuestions) {
-    const checked = document.querySelector(`input[name="${q.id}"]:checked`);
-    if (checked) answers[q.id] = checked.value;
-  }
-  try {
-    await fetch('/api/profile', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ answers }),
-    });
-    closeSettings();
-    addChatMsg('system', '✓ Risk profile updated');
-  } catch (e) {
-    console.error('Profile save failed:', e);
-  }
-}
-
-// ── Helpers ──
-function escapeHtml(s) {
-  if (!s) return '';
-  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-}
-
-function getTierClass(tier) {
-  if (tier === 'tier1_auto') return 'auto';
-  if (tier === 'tier2_notify') return 'notify';
-  if (tier === 'tier3_approve') return 'approve';
-  if (tier === 'tier4_blocked') return 'blocked';
-  return '';
-}
-
-function getTierLabel(tier) {
-  if (tier === 'tier1_auto') return '● Auto-executed';
-  if (tier === 'tier2_notify') return '● Notify';
-  if (tier === 'tier3_approve') return '● Requires approval';
-  if (tier === 'tier4_blocked') return '● Blocked';
-  return tier;
-}
-
-function getDotColor(event) {
-  if (event.tier === 'tier1_auto') return 'green';
-  if (event.tier === 'tier2_notify') return 'yellow';
-  if (event.tier === 'tier3_approve') return 'orange';
-  if (event.tier === 'tier4_blocked') return 'red';
-  if (event.event_type === 'message_received') return 'blue';
-  if (event.event_type === 'action_approved') return 'green';
-  if (event.event_type === 'action_rejected') return 'red';
-  if (event.event_type === 'profile_updated') return 'blue';
-  return 'gray';
-}
-
-// Poll for approval badge updates
-setInterval(updateApprovalBadge, 5000);
+async function openSettings() { const res = await fetch('/api/onboarding'); const data = await res.json(); settingsQuestions = data.questions || []; const current = data.current_profile || {}; document.getElementById('settings-questions').innerHTML = settingsQuestions.map(q => `<div class="q-group"><label>${escapeHtml(q.question)}</label>${q.options.map(o => `<label class="option"><input type="radio" name="${q.id}" value="${o.value}" ${current[q.id] === o.value ? 'checked' : ''}>${escapeHtml(o.label)}</label>`).join('')}</div>`).join(''); document.getElementById('settings-modal').classList.add('show'); }
+function closeSettings() { document.getElementById('settings-modal').classList.remove('show'); }
+async function saveProfile() { const answers = {}; for (const q of settingsQuestions) { const checked = document.querySelector(`input[name="${q.id}"]:checked`); if (checked) answers[q.id] = checked.value; } await fetch('/api/profile', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ answers }) }); closeSettings(); addChatMsg('system', '✓ Risk profile updated'); }
+function escapeHtml(s) { return (s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function getTierClass(t) { if (t === 'tier1_auto') return 'auto'; if (t === 'tier2_notify') return 'notify'; if (t === 'tier3_approve') return 'approve'; if (t === 'tier4_blocked') return 'blocked'; return ''; }
+function getTierLabel(t) { if (t === 'tier1_auto') return 'Auto-executed'; if (t === 'tier2_notify') return 'Executed'; if (t === 'tier3_approve') return 'Needs approval'; if (t === 'tier4_blocked') return 'Blocked'; return t; }
+function getDotColor(e) { if (e.tier === 'tier1_auto') return 'green'; if (e.tier === 'tier2_notify') return 'yellow'; if (e.tier === 'tier3_approve') return 'orange'; if (e.tier === 'tier4_blocked') return 'red'; if (e.event_type === 'message_received') return 'blue'; if (e.event_type === 'action_approved') return 'green'; if (e.event_type === 'action_rejected') return 'red'; return 'gray'; }
+setInterval(updateApprovalBadge, 5000); updateApprovalBadge();
 </script>
 </body>
-</html>
+</html>CTRL_Cexit
