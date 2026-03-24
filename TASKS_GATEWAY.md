@@ -25,19 +25,19 @@
 - [x] Git commit: "feat: add OpenClaw gateway client"
 
 ## Task 2: Integrate gateway client into server.py
-- [ ] In server.py, add import: `from vaaf.openclaw_client import OpenClawClient`
-- [ ] Add global variable: `openclaw_client = None`
-- [ ] In the lifespan/startup function, after existing initialization, add:
+- [x] In server.py, add import: `from vaaf.openclaw_client import OpenClawClient`
+- [x] Add global variable: `openclaw_client = None`
+- [x] In the lifespan/startup function, after existing initialization, add:
   - Read `OPENCLAW_GATEWAY_TOKEN` from env
   - If token exists, create `OpenClawClient(gateway_token=token)`
   - Call `await openclaw_client.check_health()`
   - If connected, print "✓ Connected to OpenClaw gateway"
   - If not connected, set `openclaw_client = None` and print warning
   - If no token, print "⚠ No OPENCLAW_GATEWAY_TOKEN — standalone mode"
-- [ ] Add new endpoint `GET /api/gateway/status` that returns:
+- [x] Add new endpoint `GET /api/gateway/status` that returns:
   - `{"connected": bool, "mode": "openclaw"|"standalone", "gateway_url": str}`
-- [ ] Test: restart server, verify it prints connection status
-- [ ] Git commit: "feat: initialize OpenClaw gateway on startup"
+- [x] Test: restart server, verify it prints connection status
+- [x] Git commit: "feat: initialize OpenClaw gateway on startup"
 
 ## Task 3: Route chat through OpenClaw gateway
 - [ ] In the `/api/chat` endpoint, add routing at the TOP of the function:

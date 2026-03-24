@@ -28,12 +28,14 @@ from vaaf.database import CouncilDatabase
 from vaaf.risk_profile import (
     ONBOARDING_QUESTIONS, build_profile, profile_to_context,
 )
+from vaaf.openclaw_client import OpenClawClient
 
 load_dotenv()
 
 # ── Global state ──────────────────────────────────────────────────────────
 
 client: AsyncOpenAI | None = None
+openclaw_client: OpenClawClient | None = None
 db = CouncilDatabase("council.db")
 tier_classifier = TierClassifier(db=db)
 audit_log = AuditLog(db=db)
@@ -113,7 +115,7 @@ def _suggest_profile_questions() -> list[dict]:
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    global client
+    global client, openclaw_client
     api_key = os.getenv("OPENAI_API_KEY", "")
     if not api_key or api_key.startswith("sk-your"):
         print("\n⚠️  WARNING: Set OPENAI_API_KEY in .env file")
@@ -122,9 +124,28 @@ async def lifespan(app: FastAPI):
     else:
         client = AsyncOpenAI(api_key=api_key)
         print("✓ OpenAI client initialized")
-    print("✓ Council server ready at http://localhost:8000\n")
-    yield
 
+    gateway_token = os.getenv("OPENCLAW_GATEWAY_TOKEN", "")
+    if gateway_token:
+        candidate = OpenClawClient(gateway_token=gateway_token)
+        health = await candidate.check_health()
+        if health["connected"]:
+            openclaw_client = candidate
+            print("✓ Connected to OpenClaw gateway")
+        else:
+            await candidate.close()
+            openclaw_client = None
+            print(f"⚠ OpenClaw gateway unavailable: {health['error']}")
+    else:
+        openclaw_client = None
+        print("⚠ No OPENCLAW_GATEWAY_TOKEN — standalone mode")
+
+    print("✓ Council server ready at http://localhost:8000\n")
+    try:
+        yield
+    finally:
+        if openclaw_client:
+            await openclaw_client.close()
 
 app = FastAPI(title="Council", lifespan=lifespan)
 app.add_middleware(
@@ -265,6 +286,21 @@ async def update_settings(req: SettingsUpdate):
         "council_model": council_model,
     }
 
+
+@app.get("/api/gateway/status")
+async def gateway_status():
+    """Return current OpenClaw gateway connectivity status."""
+    connected = bool(openclaw_client)
+    gateway_url = (
+        openclaw_client.gateway_url
+        if openclaw_client
+        else os.getenv("OPENCLAW_GATEWAY_URL", "http://127.0.0.1:18789")
+    )
+    return {
+        "connected": connected,
+        "mode": "openclaw" if connected else "standalone",
+        "gateway_url": gateway_url,
+    }
 
 @app.post("/api/chat")
 async def chat(req: ChatRequest):
