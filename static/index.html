@@ -38,11 +38,16 @@ button, input { font-family: inherit; }
   position: sticky; top: 0; z-index: 20; background: var(--surface); border-bottom: 1px solid var(--border);
   padding: calc(env(safe-area-inset-top) + 10px) 14px 10px; display: flex; align-items: center; justify-content: space-between;
 }
+.topbar-right { display: flex; align-items: center; gap: 10px; }
 .brand { font-size: 19px; font-weight: 700; letter-spacing: 0.2px; }
 .topbar-left { display: flex; flex-direction: column; gap: 4px; }
 .gateway-status { display: inline-flex; align-items: center; gap: 7px; font-size: 12px; color: var(--text-muted); }
 .gateway-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--warning); box-shadow: 0 0 0 2px rgba(234,179,8,.2); }
 .gateway-status.connected .gateway-dot { background: var(--success); box-shadow: 0 0 0 2px rgba(34,197,94,.2); }
+.verification-indicator { display: inline-flex; align-items: center; gap: 6px; padding: 6px 10px; border-radius: var(--radius-pill); border: 1px solid #1f1f1f; background: var(--surface2); font-size: 12px; color: var(--text-muted); min-width: 118px; justify-content: center; }
+.verification-indicator.valid { border-color: rgba(34,197,94,.4); background: #132417; color: var(--success); box-shadow: 0 0 0 1px rgba(34,197,94,.15); }
+.verification-indicator.error { border-color: rgba(239,68,68,.4); background: #2a1212; color: #fecaca; box-shadow: 0 0 0 1px rgba(239,68,68,.12); }
+.verification-icon { width: 14px; height: 14px; display: inline-flex; }
 .chat-info-banner { margin: 8px 14px 0; padding: 10px 12px; border-radius: 10px; background: #122038; border: 1px solid #244272; color: #bfdbfe; font-size: 12px; line-height: 1.4; }
 .chat-info-banner strong { color: #dbeafe; }
 .settings-btn { width: 44px; height: 44px; border: 1px solid var(--border); border-radius: 50%; background: var(--surface2); color: var(--text); display: grid; place-items: center; cursor: pointer; }
@@ -106,6 +111,10 @@ button, input { font-family: inherit; }
 .empty { text-align: center; color: var(--text-muted); padding: 48px 16px; display: flex; flex-direction: column; align-items: center; gap: 8px; }
 .empty .check-icon { width: 28px; height: 28px; color: var(--success); }
 .event-row { display: flex; gap: 10px; align-items: flex-start; padding: 10px; border-radius: 10px; background: #121212; margin-bottom: 8px; }
+.event-row .event-text { flex: 1; text-align: left; }
+.receipt-lock { width: 26px; height: 26px; border-radius: 50%; border: 1px solid #2a2a2a; display: inline-flex; align-items: center; justify-content: center; color: var(--text-muted); background: #0f0f0f; }
+.receipt-lock svg { width: 14px; height: 14px; }
+.receipt-lock.valid { border-color: rgba(59,130,246,.4); color: var(--accent); background: rgba(37,99,235,.12); }
 .event-dot { width: 8px; height: 8px; border-radius: 50%; margin-top: 6px; }
 .event-dot.green { background: var(--success); }
 .event-dot.yellow { background: var(--warning); }
@@ -126,6 +135,13 @@ button, input { font-family: inherit; }
 .event-kv { margin-bottom: 6px; line-height: 1.45; }
 .event-kv code { background: #191919; border: 1px solid #2a2a2a; border-radius: 6px; padding: 1px 4px; color: #c7c7c7; }
 .event-votes { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+.override-btn { min-height: 40px; border-radius: var(--radius-btn); border: 1px solid #f87171; background: #3a1313; color: #fecaca; padding: 0 16px; font-weight: 600; cursor: pointer; }
+.override-btn:disabled { opacity: .6; cursor: not-allowed; }
+.event-item.overridden { border-color: #1f4f2a; background: #132417; transition: background .2s ease, border-color .2s ease; }
+.event-item.overridden .event-row { background: transparent; }
+.event-item.overridden .event-dot { background: var(--success); }
+.event-item.overridden .override-btn { background: #132417; color: var(--success); border-color: rgba(34,197,94,.6); }
+.override-inline { padding: 0 12px 10px 44px; }
 .timeline-line { position: relative; }
 .timeline-line::before { content: ''; position: absolute; left: 15px; top: 26px; bottom: -8px; width: 2px; background: #242424; }
 .event-item:last-child .timeline-line::before { display: none; }
@@ -189,6 +205,11 @@ button, input { font-family: inherit; }
 .close-btn { float: right; border: none; background: transparent; color: var(--text-muted); font-size: 22px; line-height: 1; padding: 2px 6px; cursor: pointer; }
 .settings-section { background: #171717; border: 1px solid #2a2a2a; border-radius: 12px; padding: 12px; margin-bottom: 10px; }
 .settings-section h3 { font-size: 14px; margin-bottom: 8px; }
+.chain-summary { display: flex; justify-content: space-between; gap: 16px; align-items: center; padding: 10px; border-radius: 10px; background: #111; border: 1px solid #242424; margin-bottom: 10px; flex-wrap: wrap; }
+.chain-status-text { font-size: 15px; font-weight: 600; }
+.chain-status-sub { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+.chain-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.chain-note { font-size: 12px; color: var(--text-muted); margin: 6px 0 10px; }
 .settings-row { display: grid; gap: 8px; margin-bottom: 8px; }
 .settings-input, .settings-select { width: 100%; min-height: 42px; border-radius: 8px; border: 1px solid #333; background: #111; color: var(--text); padding: 10px; font-size: 14px; }
 .settings-switch { display: flex; align-items: center; justify-content: space-between; gap: 10px; font-size: 13px; color: var(--text); margin-bottom: 8px; }
@@ -199,6 +220,7 @@ button, input { font-family: inherit; }
 .audit-item .meta { margin-bottom: 4px; }
 .audit-pagination { display: flex; justify-content: space-between; align-items: center; margin-top: 8px; }
 .mini-btn { min-height: 36px; border-radius: 8px; border: 1px solid #333; background: #1e1e1e; color: var(--text); padding: 0 10px; }
+.mini-btn.accent { border-color: rgba(59,130,246,.6); background: #0f1a2e; color: #bfdbfe; }
 .q-group { margin-bottom: 14px; }
 .q-group label { display: block; font-size: 13px; margin-bottom: 6px; }
 .option { display: flex; gap: 8px; align-items: center; padding: 8px; border-radius: 10px; background: #161616; margin-bottom: 6px; }
@@ -247,9 +269,15 @@ button, input { font-family: inherit; }
         <span id="gateway-status-text">Checking gateway...</span>
       </div>
     </div>
-    <button class="settings-btn" onclick="openSettings()" aria-label="Open settings">
-      <svg viewBox="0 0 24 24"><path d="M12 8.5a3.5 3.5 0 1 0 0 7 3.5 3.5 0 0 0 0-7Z"></path><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.87l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06A1.7 1.7 0 0 0 15 19.4a1.7 1.7 0 0 0-1 .54 1.7 1.7 0 0 0-.4 1.1V21a2 2 0 0 1-4 0v-.08a1.7 1.7 0 0 0-.4-1.1 1.7 1.7 0 0 0-1-.54 1.7 1.7 0 0 0-1.87.34l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.7 1.7 0 0 0 4.6 15a1.7 1.7 0 0 0-.54-1 1.7 1.7 0 0 0-1.1-.4H2.9a2 2 0 0 1 0-4h.08a1.7 1.7 0 0 0 1.1-.4 1.7 1.7 0 0 0 .54-1 1.7 1.7 0 0 0-.34-1.87l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.7 1.7 0 0 0 9 4.6a1.7 1.7 0 0 0 1-.54 1.7 1.7 0 0 0 .4-1.1V2.9a2 2 0 0 1 4 0v.08a1.7 1.7 0 0 0 .4 1.1 1.7 1.7 0 0 0 1 .54 1.7 1.7 0 0 0 1.87-.34l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.7 1.7 0 0 0 19.4 9c.25.3.43.65.54 1 .11.36.16.74.16 1.13s-.05.77-.16 1.13a2.8 2.8 0 0 1-.54 1Z"></path></svg>
-    </button>
+    <div class="topbar-right">
+      <div class="verification-indicator" id="verification-indicator" role="status" aria-live="polite">
+        <svg class="verification-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 5 5.5v5.2c0 4.7 3.2 9.1 7 10.3 3.8-1.2 7-5.6 7-10.3V5.5Z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"></path><path d="m9.5 12.5 2 2 3.5-3.5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+        <span id="verification-text">Verifying chain…</span>
+      </div>
+      <button class="settings-btn" onclick="openSettings()" aria-label="Open settings">
+        <svg viewBox="0 0 24 24"><path d="M12 8.5a3.5 3.5 0 1 0 0 7 3.5 3.5 0 0 0 0-7Z"></path><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.87l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06A1.7 1.7 0 0 0 15 19.4a1.7 1.7 0 0 0-1 .54 1.7 1.7 0 0 0-.4 1.1V21a2 2 0 0 1-4 0v-.08a1.7 1.7 0 0 0-.4-1.1 1.7 1.7 0 0 0-1-.54 1.7 1.7 0 0 0-1.87.34l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.7 1.7 0 0 0 4.6 15a1.7 1.7 0 0 0-.54-1 1.7 1.7 0 0 0-1.1-.4H2.9a2 2 0 0 1 0-4h.08a1.7 1.7 0 0 0 1.1-.4 1.7 1.7 0 0 0 .54-1 1.7 1.7 0 0 0-.34-1.87l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.7 1.7 0 0 0 9 4.6a1.7 1.7 0 0 0 1-.54 1.7 1.7 0 0 0 .4-1.1V2.9a2 2 0 0 1 4 0v.08a1.7 1.7 0 0 0 .4 1.1 1.7 1.7 0 0 0 1 .54 1.7 1.7 0 0 0 1.87-.34l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.7 1.7 0 0 0 19.4 9c.25.3.43.65.54 1 .11.36.16.74.16 1.13s-.05.77-.16 1.13a2.8 2.8 0 0 1-.54 1Z"></path></svg>
+      </button>
+    </div>
   </header>
   <main class="content">
     <section class="panel active" id="panel-chat"><div class="chat-panel"><div class="chat-messages" id="chat-messages"><div class="msg system">Council is active. Agent actions are reviewed before execution.</div></div><div class="chat-info-banner" id="gateway-chat-banner" style="display:none;"><strong>OpenClaw connected.</strong> Messages are sent to your OpenClaw agent. Actions are monitored by Council.</div><div class="chat-input"><input type="text" id="chat-input" placeholder="Tell the agent what to do..." onkeydown="if(event.key==='Enter')sendMessage()"><button id="send-btn" onclick="sendMessage()">Send</button></div></div></section>
@@ -276,7 +304,24 @@ button, input { font-family: inherit; }
     </div>
   </div>
 </div>
-<div class="modal-overlay" id="settings-modal" onclick="if(event.target===this)closeSettings()"><div class="modal" role="dialog" aria-label="Settings"><div class="modal-handle"></div><button class="close-btn" onclick="closeSettings()">×</button><h2>Settings</h2><section class="settings-section"><h3>Risk Profile</h3><div id="settings-questions"></div><button class="save-btn" onclick="saveProfile()">Re-take questionnaire</button></section><section class="settings-section"><h3>Your Goal</h3><div class="settings-row"><input id="settings-name" class="settings-input" placeholder="Your name"><input id="settings-goal" class="settings-input" placeholder="Your goal"></div><button class="save-btn" onclick="saveGoalSettings()">Save goal</button></section><section class="settings-section"><h3>Audit Trail</h3><div class="audit-controls"><input id="audit-search" class="settings-input" placeholder="Search actions" oninput="renderAuditTrail()"><select id="audit-tier" class="settings-select" onchange="renderAuditTrail()"><option value="all">All tiers</option><option value="tier1_auto">Tier 1</option><option value="tier2_notify">Tier 2</option><option value="tier3_approve">Tier 3</option><option value="tier4_blocked">Tier 4</option></select></div><div id="audit-list" class="audit-list"></div><div class="audit-pagination"><button class="mini-btn" onclick="changeAuditPage(-1)">Prev</button><span id="audit-page" class="muted">Page 1</span><button class="mini-btn" onclick="changeAuditPage(1)">Next</button></div></section><section class="settings-section"><h3>Council Config</h3><label class="settings-switch"><span>Council enabled</span><input type="checkbox" id="cfg-enabled"></label><label class="settings-row"><span class="muted">Model</span><select id="cfg-model" class="settings-select"><option value="gpt-4o-mini">gpt-4o-mini</option><option value="gpt-4.1-mini">gpt-4.1-mini</option><option value="gpt-4o">gpt-4o</option></select></label><button class="save-btn" onclick="saveCouncilConfig()">Save config</button></section><section class="settings-section"><h3>About</h3><p class="muted">Council v0.1 · AI action review framework.</p><p><a href="https://github.com" target="_blank" rel="noopener" style="color:var(--accent)">GitHub repository</a></p></section></div></div>
+<div class="modal-overlay" id="settings-modal" onclick="if(event.target===this)closeSettings()"><div class="modal" role="dialog" aria-label="Settings"><div class="modal-handle"></div><button class="close-btn" onclick="closeSettings()">×</button><h2>Settings</h2><section class="settings-section"><h3>Risk Profile</h3><div id="settings-questions"></div><button class="save-btn" onclick="saveProfile()">Re-take questionnaire</button></section><section class="settings-section"><h3>Your Goal</h3><div class="settings-row"><input id="settings-name" class="settings-input" placeholder="Your name"><input id="settings-goal" class="settings-input" placeholder="Your goal"></div><button class="save-btn" onclick="saveGoalSettings()">Save goal</button></section><section class="settings-section">
+  <h3>Audit Trail</h3>
+  <div class="chain-summary">
+    <div>
+      <div class="chain-status-text" id="chain-status-text">Verifying chain...</div>
+      <div class="chain-status-sub" id="chain-status-sub">Integrity check pending.</div>
+    </div>
+    <div class="chain-actions">
+      <button class="mini-btn" id="verify-now-btn" onclick="verifyChainNow()">Verify now</button>
+      <button class="mini-btn accent" id="run-benchmark-btn" onclick="runBenchmarkNow()">Run benchmark</button>
+    </div>
+  </div>
+  <p class="chain-note">In production, receipts are submitted to EigenDA for immutable on-chain verification via EigenCloud.</p>
+  <div class="audit-controls"><input id="audit-search" class="settings-input" placeholder="Search actions" oninput="renderAuditTrail()"><select id="audit-tier" class="settings-select" onchange="renderAuditTrail()"><option value="all">All tiers</option><option value="tier1_auto">Tier 1</option><option value="tier2_notify">Tier 2</option><option value="tier3_approve">Tier 3</option><option value="tier4_blocked">Tier 4</option></select></div>
+  <div id="audit-list" class="audit-list"></div>
+  <div class="audit-pagination"><button class="mini-btn" onclick="changeAuditPage(-1)">Prev</button><span id="audit-page" class="muted">Page 1</span><button class="mini-btn" onclick="changeAuditPage(1)">Next</button></div>
+  <div id="benchmark-run-status" class="chain-status-sub"></div>
+</section><section class="settings-section"><h3>Council Config</h3><label class="settings-switch"><span>Council enabled</span><input type="checkbox" id="cfg-enabled"></label><label class="settings-row"><span class="muted">Model</span><select id="cfg-model" class="settings-select"><option value="gpt-4o-mini">gpt-4o-mini</option><option value="gpt-4.1-mini">gpt-4.1-mini</option><option value="gpt-4o">gpt-4o</option></select></label><button class="save-btn" onclick="saveCouncilConfig()">Save config</button></section><section class="settings-section"><h3>About</h3><p class="muted">Council v0.1 · AI action review framework.</p><p><a href="https://github.com" target="_blank" rel="noopener" style="color:var(--accent)">GitHub repository</a></p></section></div></div>
 <script>
 if ('serviceWorker' in navigator) { window.addEventListener('load', () => navigator.serviceWorker.register('/static/sw.js').catch(() => {})); }
 function updateKeyboardOffset() {
@@ -292,6 +337,9 @@ function switchTab(tab) { document.querySelectorAll('.tab').forEach(t => t.class
 let notifiedApprovalIds = new Set();
 let notificationPermissionAsked = false;
 let gatewayStatus = { connected: false, mode: 'standalone', gateway_url: '' };
+
+let verificationInfo = { loading: true, valid: false, intact: false, receipts: 0, error: null };
+let verificationReceiptsMap = new Map();
 
 function applyGatewayStatus(status) {
   gatewayStatus = status || { connected: false, mode: 'standalone', gateway_url: '' };
@@ -314,6 +362,113 @@ async function refreshGatewayStatus() {
     applyGatewayStatus(data);
   } catch (_) {
     applyGatewayStatus({ connected: false, mode: 'standalone', gateway_url: '' });
+  }
+}
+
+function renderVerificationIndicator() {
+  const indicator = document.getElementById('verification-indicator');
+  const textEl = document.getElementById('verification-text');
+  if (!indicator || !textEl) return;
+  indicator.classList.remove('valid', 'error');
+  if (verificationInfo.loading) {
+    textEl.textContent = 'Verifying chain…';
+    indicator.setAttribute('title', 'Checking verification receipts');
+    return;
+  }
+  if (verificationInfo.valid) {
+    indicator.classList.add('valid');
+    textEl.textContent = `Verified (${verificationInfo.receipts})`;
+    indicator.setAttribute('title', `Chain intact · ${verificationInfo.receipts} receipts`);
+  } else {
+    indicator.classList.add('error');
+    textEl.textContent = 'Chain broken';
+    indicator.setAttribute('title', verificationInfo.error || 'Verification unavailable');
+  }
+}
+
+function renderChainSummary(overrideMessage) {
+  const statusEl = document.getElementById('chain-status-text');
+  const subEl = document.getElementById('chain-status-sub');
+  if (!statusEl || !subEl) return;
+  if (verificationInfo.loading) {
+    statusEl.textContent = 'Verifying chain...';
+    subEl.textContent = 'Integrity check pending.';
+    return;
+  }
+  if (verificationInfo.valid) {
+    statusEl.textContent = `Chain intact · ${verificationInfo.receipts} receipts`;
+    subEl.textContent = overrideMessage || 'Last verified moments ago.';
+  } else {
+    const broken = verificationInfo.error && verificationInfo.error.toLowerCase().includes('break');
+    statusEl.textContent = broken ? 'Chain broken' : 'Verification unavailable';
+    subEl.textContent = overrideMessage || verificationInfo.error || 'Receipts need review.';
+  }
+}
+
+async function refreshVerificationStatus() {
+  verificationInfo = { ...verificationInfo, loading: true };
+  renderVerificationIndicator();
+  try {
+    const res = await fetch('/api/verification/verify');
+    if (!res.ok) throw new Error('Verification unavailable');
+    const data = await res.json();
+    verificationInfo = {
+      loading: false,
+      valid: Boolean(data.valid && data.chain_intact),
+      intact: Boolean(data.chain_intact),
+      receipts: Number(data.receipts_checked ?? data.receipts ?? 0),
+      error: null,
+    };
+  } catch (err) {
+    verificationInfo = { loading: false, valid: false, intact: false, receipts: 0, error: err?.message || 'Verification unavailable' };
+  }
+  renderVerificationIndicator();
+  renderChainSummary();
+}
+
+async function verifyChainNow() {
+  const btn = document.getElementById('verify-now-btn');
+  if (btn) {
+    btn.disabled = true;
+    btn.innerHTML = '<span class="loading"></span> Verifying';
+  }
+  await refreshVerificationStatus();
+  if (btn) {
+    btn.disabled = false;
+    btn.textContent = 'Verify now';
+  }
+  const message = verificationInfo.valid ? 'Chain verified just now.' : (verificationInfo.error || 'Verification failed.');
+  renderChainSummary(message);
+}
+
+async function runBenchmarkNow() {
+  const btn = document.getElementById('run-benchmark-btn');
+  const statusEl = document.getElementById('benchmark-run-status');
+  if (btn) {
+    btn.disabled = true;
+    btn.innerHTML = '<span class="loading"></span> Running';
+  }
+  if (statusEl) statusEl.textContent = 'Running benchmark...';
+  try {
+    const res = await fetch('/api/benchmark/run', { method: 'POST' });
+    if (!res.ok) {
+      let detail = 'Benchmark failed';
+      try {
+        const err = await res.json();
+        if (err?.detail) detail = err.detail;
+      } catch (_) {}
+      throw new Error(detail);
+    }
+    if (statusEl) statusEl.textContent = 'Benchmark completed. Refreshing results...';
+    await refreshBenchmarkResults();
+    if (statusEl) statusEl.textContent = 'Benchmark completed successfully.';
+  } catch (err) {
+    if (statusEl) statusEl.textContent = `Benchmark failed: ${err.message}`;
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.textContent = 'Run benchmark';
+    }
   }
 }
 
@@ -624,13 +779,23 @@ async function handleApproval(actionId, approved) {
 
 async function updateApprovalBadge() { const res = await fetch('/api/approvals'); const data = await res.json(); const pending = data.pending || []; const count = pending.length || 0; const badge = document.getElementById('approval-badge'); badge.textContent = count; badge.style.display = count > 0 ? 'flex' : 'none'; const currentIds = new Set(pending.map(a => a.id)); notifiedApprovalIds.forEach(id => { if (!currentIds.has(id)) notifiedApprovalIds.delete(id); }); pending.forEach(notifyApprovalNeeded); }
 async function loadActivity() {
+  const list = document.getElementById('activity-list');
+  const filterBar = document.getElementById('activity-filters')?.outerHTML || '';
+  if (list) list.innerHTML = `${filterBar}${loadingCards(4)}`;
+  clearPanelError('panel-activity');
   try {
-    const res = await fetch('/api/activity');
-    const data = await res.json();
-    const list = document.getElementById('activity-list');
-    const filterBar = document.getElementById('activity-filters')?.outerHTML || '';
-    list.innerHTML = `${filterBar}${loadingCards(4)}`;
-    clearPanelError('panel-activity');
+    const [activityRes, receiptsRes] = await Promise.all([
+      fetch('/api/activity'),
+      fetch('/api/verification/chain?limit=200').catch(() => null),
+    ]);
+    if (!activityRes.ok) throw new Error('Activity request failed');
+    const data = await activityRes.json();
+    let receipts = [];
+    if (receiptsRes && receiptsRes.ok) {
+      const receiptJson = await receiptsRes.json();
+      receipts = receiptJson.receipts || [];
+    }
+    verificationReceiptsMap = new Map(receipts.map(r => [r.action_id, r]));
     const events = (data.events || []).filter(matchesActivityFilter);
     if (!events.length) {
       list.innerHTML = `${filterBar}<div class="empty">No activity yet. Start chatting.</div>`;
@@ -638,11 +803,10 @@ async function loadActivity() {
     }
     list.innerHTML = `${filterBar}${events.map(renderActivityEvent).join('')}`;
   } catch (e) {
-    const list = document.getElementById('activity-list');
-    const filterBar = document.getElementById('activity-filters')?.outerHTML || '';
-    list.innerHTML = `${filterBar}${loadingCards(4)}`;
-    clearPanelError('panel-activity');
-    list.innerHTML = `${filterBar}<div class="empty">Could not load activity feed right now.</div>`;
+    verificationReceiptsMap = new Map();
+    if (list) {
+      list.innerHTML = `${filterBar}<div class="empty">Could not load activity feed right now.</div>`;
+    }
     setPanelError('panel-activity', 'Activity feed is temporarily unavailable. It will retry automatically.');
   }
 }
@@ -851,6 +1015,14 @@ async function openSettings() {
   auditPage = 1;
   renderAuditTrail();
 
+  const benchmarkStatus = document.getElementById('benchmark-run-status');
+  if (benchmarkStatus) benchmarkStatus.textContent = '';
+  if (verificationInfo.loading) {
+    refreshVerificationStatus();
+  } else {
+    renderChainSummary();
+  }
+
   document.getElementById('settings-modal').classList.add('show');
 }
 function closeSettings() { document.getElementById('settings-modal').classList.remove('show'); }
@@ -912,6 +1084,55 @@ function escapeHtml(s) { return (s || '').replace(/&/g,'&amp;').replace(/</g,'&l
 function getTierClass(t) { if (t === 'tier1_auto') return 'auto'; if (t === 'tier2_notify') return 'notify'; if (t === 'tier3_approve') return 'approve'; if (t === 'tier4_blocked') return 'blocked'; return ''; }
 function getTierLabel(t) { if (t === 'tier1_auto') return 'Auto-executed'; if (t === 'tier2_notify') return 'Executed'; if (t === 'tier3_approve') return 'Needs approval'; if (t === 'tier4_blocked') return 'Blocked'; return t; }
 function getDotColor(e) { if (e.tier === 'tier1_auto') return 'green'; if (e.tier === 'tier2_notify') return 'yellow'; if (e.tier === 'tier3_approve') return 'orange'; if (e.tier === 'tier4_blocked') return 'red'; if (e.event_type === 'message_received') return 'blue'; if (e.event_type === 'action_approved') return 'green'; if (e.event_type === 'action_rejected') return 'red'; return 'gray'; }
+function getReceiptSnippet(actionId) {
+  if (!actionId || !verificationReceiptsMap || !verificationReceiptsMap.size) return null;
+  const receipt = verificationReceiptsMap.get(actionId);
+  if (!receipt) return null;
+  const hash = (receipt.hash || '').slice(0, 8);
+  return { hashShort: hash || 'pending', fullHash: receipt.hash || '' };
+}
+
+async function overrideBlockedAction(actionId, eventId) {
+  if (!actionId) return;
+  const confirmOverride = window.confirm('This was blocked by the safety council. Are you sure?');
+  if (!confirmOverride) return;
+  const eventEl = document.getElementById(`event-${eventId}`);
+  const btn = eventEl?.querySelector('.override-btn');
+  if (btn) {
+    btn.disabled = true;
+    btn.textContent = 'Overriding...';
+  }
+  try {
+    const res = await fetch('/api/override', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action_id: actionId, approved: true }),
+    });
+    if (!res.ok) {
+      let detail = 'Override failed';
+      try {
+        const err = await res.json();
+        if (err?.detail) detail = err.detail;
+      } catch (_) {}
+      throw new Error(detail);
+    }
+    if (eventEl) {
+      eventEl.classList.add('overridden');
+      setTimeout(() => eventEl.classList.remove('overridden'), 1200);
+    }
+    if (btn) btn.textContent = 'Overridden';
+    try {
+      await loadActivity();
+    } catch (_) {}
+  } catch (err) {
+    if (btn) {
+      btn.disabled = false;
+      btn.textContent = 'Override';
+    }
+    alert(`Override failed: ${err.message}`);
+  }
+}
+
 let activityFilter = 'all';
 function setActivityFilter(next) {
   activityFilter = next;
@@ -935,8 +1156,14 @@ function renderActivityEvent(e) {
   if (details.parameters && Object.keys(details.parameters).length) detailBits.push(`<div class="event-kv"><strong>Parameters:</strong> <code>${escapeHtml(JSON.stringify(details.parameters))}</code></div>`);
   const votes = details.council_votes || details.verdicts || [];
   if (votes.length) detailBits.push(`<div class="event-kv"><strong>Council verdicts:</strong><div class="event-votes">${votes.map(v=>`<span class="verdict-chip ${escapeHtml(v.verdict || 'FLAG')}">${escapeHtml(v.checker || 'checker')}: ${escapeHtml(v.verdict || 'FLAG')} · ${escapeHtml(v.reason || 'No reason')}</span>`).join('')}</div></div>`);
+  const receipt = getReceiptSnippet(e.action_id);
+  if (receipt && receipt.fullHash) detailBits.push(`<div class="event-kv"><strong>Receipt:</strong> <code>${escapeHtml(receipt.fullHash)}</code></div>`);
   if (!detailBits.length) detailBits.push('<div class="event-kv">No additional details available.</div>');
-  return `<article class="event-item" id="event-${escapeHtml(e.id)}"><button class="event-row timeline-line" onclick="toggleEventDetails('${escapeHtml(e.id)}')" style="width:100%;background:transparent;border:none;color:inherit;text-align:left"><span class="event-dot ${getDotColor(e)}"></span><span class="event-text">${escapeHtml(e.summary)}</span><span class="event-time">${time}</span></button><div class="event-detail">${detailBits.join('')}</div></article>`;
+  const receiptIcon = receipt ? `<span class="receipt-lock valid" title="Receipt ${escapeHtml(receipt.hashShort)}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="6" y="10" width="12" height="10" rx="2"></rect><path d="M9 10V7a3 3 0 0 1 6 0v3"></path></svg></span>` : '';
+  const overrideInline = (e.tier === 'tier4_blocked' && e.action_id)
+    ? `<div class="override-inline"><button class="override-btn" onclick="overrideBlockedAction('${escapeHtml(e.action_id)}','${escapeHtml(e.id)}')">Override</button></div>`
+    : '';
+  return `<article class="event-item" id="event-${escapeHtml(e.id)}"><button class="event-row timeline-line" onclick="toggleEventDetails('${escapeHtml(e.id)}')" style="width:100%;background:transparent;border:none;color:inherit;text-align:left"><span class="event-dot ${getDotColor(e)}"></span><span class="event-text">${escapeHtml(e.summary)}</span>${receiptIcon}<span class="event-time">${time}</span></button>${overrideInline}<div class="event-detail">${detailBits.join('')}</div></article>`;
 }
 function toggleEventDetails(id) {
   const el = document.getElementById(`event-${id}`);
@@ -1067,6 +1294,7 @@ function setupApprovalsPullToRefresh() {
 setInterval(updateApprovalBadge, 5000);
 setInterval(() => { const panel = document.getElementById('panel-activity'); if (panel && panel.classList.contains('active')) loadActivity(); }, 5000);
 setInterval(refreshGatewayStatus, 30000);
+setInterval(refreshVerificationStatus, 60000);
 if (window.visualViewport) {
   window.visualViewport.addEventListener('resize', updateKeyboardOffset);
   window.visualViewport.addEventListener('scroll', updateKeyboardOffset);
@@ -1077,6 +1305,7 @@ window.addEventListener('focusout', () => setTimeout(updateKeyboardOffset, 50));
 updateKeyboardOffset();
 updateApprovalBadge();
 refreshGatewayStatus();
+refreshVerificationStatus();
 refreshBenchmarkResults();
 maybeStartOnboarding();
 </script>
