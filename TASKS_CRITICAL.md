@@ -1,5 +1,5 @@
 # Council — Critical Final Tasks
-# Cron: every 30 minutes. Complete ONE group per invocation.
+# Cron: every 30 minutes. Complete ONE task per invocation. Do only the next incomplete task, then STOP.
 # cd ~/projects/council && source venv/bin/activate
 # After each sub-task: git add -A && git commit -m "MESSAGE" && git push origin main
 
@@ -115,7 +115,7 @@ When done, the fine-tuned model ID is saved to `data/finetuned_model.txt` and `.
 
 Commit: "feat: fine-tuned safety classifier on AgentHarm data"
 
-**STOP after Group 1.**
+**
 
 ---
 
@@ -171,7 +171,7 @@ Test: `python -c "from vaaf.council import DEFAULT_COUNCIL_MODEL; print(DEFAULT_
 
 Commit: "feat: switch council to gpt-5.4-nano"
 
-**STOP after Group 2.**
+**
 
 ---
 
@@ -246,7 +246,7 @@ Test: restart server, trigger a council evaluation, check `curl localhost:8001/a
 
 Commit: "feat: live EigenDA testnet integration"
 
-**STOP after Group 3.**
+**
 
 ---
 
