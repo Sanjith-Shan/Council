@@ -35,6 +35,7 @@ class CouncilVote(BaseModel):
     verdict: Verdict
     reason: str
     latency_ms: float = 0
+    confidence: float = 0.0
 
 
 class CouncilResult(BaseModel):
