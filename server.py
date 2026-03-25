@@ -721,6 +721,18 @@ async def check_approval_status(action_id: str):
 
 # ── Serialization helpers ─────────────────────────────────────────────────
 
+
+
+@app.get("/api/eigenda/status")
+async def eigenda_status():
+    """EigenDA testnet connection status."""
+    return verification_chain.eigenda.get_stats()
+
+@app.get("/api/eigenda/submissions")
+async def eigenda_submissions(limit: int = 20):
+    """Recent EigenDA blob submissions."""
+    return {"submissions": verification_chain.eigenda.get_recent_submissions(limit)}
+
 def _serialize_evaluated(ea) -> dict:
     d = {
         "id": ea.action.id,

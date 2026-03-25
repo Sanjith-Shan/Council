@@ -310,7 +310,7 @@ async def check_sequence_risk(
     action_description: str,
     parameters: dict,
     recent_actions: list[str],
-    model: str = "gpt-4o-mini",
+    model: str = "gpt-5.4-nano",
 ) -> CouncilVote:
     start = time.monotonic()
     context = _build_sequence_context(tool_name, action_description, parameters, recent_actions)
@@ -361,7 +361,7 @@ async def _run_checker(
     checker_name: str,
     system_prompt: str,
     action_context: str,
-    model: str = "gpt-4o-mini",
+    model: str = "gpt-5.4-nano",
 ) -> CouncilVote:
     """Run a single council checker and return its vote."""
     start = time.monotonic()
@@ -470,7 +470,7 @@ async def evaluate_action(
     risk_profile_text: str,
     user_goal: str,
     recent_actions: list[str] | None = None,
-    model: str = "gpt-4o-mini",
+    model: str = "gpt-5.4-nano",
 ) -> CouncilResult:
     """Run all three council checkers in parallel and return the combined result."""
 

@@ -6,6 +6,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any, Iterable
 
+from vaaf.eigenda_client import EigenDAClient
 from vaaf.models import CouncilResult, CouncilVote, ProposedAction, Tier
 
 
@@ -21,6 +22,7 @@ class VerificationChain:
         self.db = db
         self.chain: list[dict] = []
         self.prev_hash = "0" * 64
+        self.eigenda = EigenDAClient()
         self._load_existing()
 
     # ------------------------------------------------------------------
@@ -62,6 +64,12 @@ class VerificationChain:
         self.prev_hash = receipt_hash
         self.chain.append(receipt)
         self._persist(receipt)
+        # Submit to EigenDA Holesky testnet (best-effort, non-blocking)
+        import asyncio
+        try:
+            asyncio.ensure_future(self.eigenda.disperse_receipt(receipt))
+        except Exception:
+            pass  # EigenDA is best-effort
         return receipt
 
     def verify(self) -> dict:
