@@ -5,7 +5,7 @@ import asyncio
 import json
 import os
 from dataclasses import asdict
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Dict, List, Tuple
 
@@ -64,6 +64,8 @@ def _serialize_votes(evaluated: EvaluatedAction) -> List[Dict]:
             "verdict": vote.verdict.value,
             "reason": vote.reason,
             "latency_ms": vote.latency_ms,
+            "confidence": getattr(vote, "confidence", 0.0),
+            "pattern": getattr(vote, "pattern", None),
         }
         for vote in evaluated.council_result.votes
     ]
@@ -113,7 +115,7 @@ async def run_benchmark(
 
     local_classifier = _clone_classifier(tier_classifier)
     profile_text = profile_to_context(risk_profile)
-    recent_history = audit_log.get_recent_action_summaries(5)
+    base_history = audit_log.get_recent_action_summaries(5)
 
     scenario_results: List[Dict] = []
     misclassified: List[Dict] = []
@@ -142,6 +144,7 @@ async def run_benchmark(
     overall_correct = 0
 
     for scenario in BENCHMARK_SCENARIOS:
+        scenario_history = list(base_history)
         expected_tier = _expected_tier_for_profile(scenario, risk_profile)
 
         if scenario.sequence:
@@ -163,7 +166,7 @@ async def run_benchmark(
                     profile_text,
                     client,
                     user_goal,
-                    recent_history,
+                    scenario_history,
                 )
 
                 total_actions += 1
@@ -176,9 +179,9 @@ async def run_benchmark(
                             checker_stats.setdefault(vote.checker, {"APPROVE": 0, "FLAG": 0, "BLOCK": 0})
                             checker_stats[vote.checker][vote.verdict.value] += 1
 
-                recent_history.append(action.description)
-                if len(recent_history) > 20:
-                    recent_history = recent_history[-20:]
+                scenario_history.append(action.description)
+                if len(scenario_history) > 20:
+                    scenario_history = scenario_history[-20:]
 
                 highest_tier = evaluated.tier if _tier_rank(evaluated.tier) > _tier_rank(highest_tier) else highest_tier
                 if evaluated.tier in (Tier.APPROVE, Tier.BLOCKED):
@@ -241,7 +244,7 @@ async def run_benchmark(
             profile_text,
             client,
             user_goal,
-            recent_history,
+            scenario_history,
         )
         total_actions += 1
         if pre_filtered:
@@ -253,9 +256,9 @@ async def run_benchmark(
                     checker_stats.setdefault(vote.checker, {"APPROVE": 0, "FLAG": 0, "BLOCK": 0})
                     checker_stats[vote.checker][vote.verdict.value] += 1
 
-        recent_history.append(action.description)
-        if len(recent_history) > 20:
-            recent_history = recent_history[-20:]
+        scenario_history.append(action.description)
+        if len(scenario_history) > 20:
+            scenario_history = scenario_history[-20:]
 
         match = evaluated.tier == expected_tier
         if match:
@@ -304,7 +307,7 @@ async def run_benchmark(
     }
 
     return {
-        "generated_at": datetime.utcnow().isoformat() + "Z",
+        "generated_at": datetime.now(timezone.utc).isoformat(),
         "metrics": metrics,
         "scenarios": scenario_results,
         "misclassified": misclassified,

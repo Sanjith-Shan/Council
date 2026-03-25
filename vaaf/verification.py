@@ -120,6 +120,7 @@ class VerificationChain:
                 "verdict": vote.verdict.value,
                 "reason": vote.reason,
                 "confidence": vote.confidence,
+                "pattern": vote.pattern,
             }
             for vote in votes
         ]

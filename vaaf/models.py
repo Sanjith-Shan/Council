@@ -31,11 +31,12 @@ class ActionStatus(str, Enum):
 # ---------- Council ----------
 
 class CouncilVote(BaseModel):
-    checker: str  # "policy", "safety", or "intent"
+    checker: str  # "policy", "safety", "intent", or "sequence"
     verdict: Verdict
     reason: str
     latency_ms: float = 0
     confidence: float = 0.0
+    pattern: Optional[str] = None
 
 
 class CouncilResult(BaseModel):

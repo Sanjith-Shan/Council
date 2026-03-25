@@ -690,6 +690,8 @@ async def evaluate_external_action(req: EvaluateRequest):
                     "verdict": v.verdict.value,
                     "reason": v.reason,
                     "latency_ms": v.latency_ms,
+                    "confidence": v.confidence,
+                    "pattern": v.pattern,
                 }
                 for v in evaluated.council_result.votes
             ],
@@ -741,6 +743,8 @@ def _serialize_evaluated(ea) -> dict:
                     "verdict": v.verdict.value,
                     "reason": v.reason,
                     "latency_ms": v.latency_ms,
+                    "confidence": v.confidence,
+                    "pattern": v.pattern,
                 }
                 for v in ea.council_result.votes
             ],

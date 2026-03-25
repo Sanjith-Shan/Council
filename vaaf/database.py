@@ -153,6 +153,7 @@ class CouncilDatabase:
                     reason=v["reason"],
                     latency_ms=v.get("latency_ms", 0),
                     confidence=v.get("confidence", 0.0),
+                    pattern=v.get("pattern"),
                 )
                 for v in cr.get("votes", [])
             ]

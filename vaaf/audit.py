@@ -30,7 +30,13 @@ class AuditLog:
                 "pre_filtered": evaluated.pre_filtered,
                 "first_use_escalated": evaluated.first_use_escalated,
                 "council_votes": [
-                    {"checker": v.checker, "verdict": v.verdict.value, "reason": v.reason}
+                    {
+                        "checker": v.checker,
+                        "verdict": v.verdict.value,
+                        "reason": v.reason,
+                        "confidence": v.confidence,
+                        "pattern": v.pattern,
+                    }
                     for v in (evaluated.council_result.votes if evaluated.council_result else [])
                 ],
             },
