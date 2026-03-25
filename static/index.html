@@ -138,6 +138,23 @@ button, input { font-family: inherit; }
 .insights-card p, .insights-card li { font-size: 13px; line-height: 1.45; }
 .insights-card ul { margin: 0; padding-left: 18px; display: grid; gap: 6px; }
 .muted { color: var(--text-muted); }
+.benchmark-card { position: relative; overflow: hidden; }
+.benchmark-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
+.benchmark-pill { font-size: 11px; color: var(--text-muted); border: 1px solid var(--border); border-radius: var(--radius-pill); padding: 4px 10px; display: none; white-space: nowrap; }
+.benchmark-stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; margin-top: 12px; }
+.benchmark-stat { background: var(--surface); border: 1px solid #1f1f1f; border-radius: 10px; padding: 12px; }
+.benchmark-stat .label { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.4px; }
+.benchmark-stat .value { font-size: 22px; font-weight: 700; margin-top: 6px; }
+.benchmark-stat.green .value { color: var(--success); }
+.benchmark-stat.red .value { color: var(--danger); }
+.benchmark-stat.blue .value { color: var(--accent); }
+.benchmark-stat.yellow .value { color: var(--warning); }
+.benchmark-bars { display: flex; align-items: flex-end; gap: 20px; height: 160px; margin-top: 18px; padding-bottom: 6px; }
+.benchmark-bar { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; gap: 8px; }
+.benchmark-bar-label { text-align: center; font-size: 12px; line-height: 1.35; color: var(--text-muted); }
+.benchmark-bar .bar-fill { width: 60%; border-radius: 10px 10px 0 0; background: var(--danger); display: flex; align-items: flex-end; justify-content: center; padding-bottom: 8px; font-size: 12px; font-weight: 600; }
+.benchmark-bar .bar-fill.green { background: var(--success); }
+.benchmark-note { margin-top: 16px; font-size: 12px; color: var(--text-muted); text-align: center; }
 .stat-card { padding: 12px; text-align: center; }
 .stat-card .number { font-size: 23px; font-weight: 700; }
 .stat-card .label { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
@@ -238,7 +255,8 @@ button, input { font-family: inherit; }
     <section class="panel active" id="panel-chat"><div class="chat-panel"><div class="chat-messages" id="chat-messages"><div class="msg system">Council is active. Agent actions are reviewed before execution.</div></div><div class="chat-info-banner" id="gateway-chat-banner" style="display:none;"><strong>OpenClaw connected.</strong> Messages are sent to your OpenClaw agent. Actions are monitored by Council.</div><div class="chat-input"><input type="text" id="chat-input" placeholder="Tell the agent what to do..." onkeydown="if(event.key==='Enter')sendMessage()"><button id="send-btn" onclick="sendMessage()">Send</button></div></div></section>
     <section class="panel" id="panel-approvals"><div class="approval-list" id="approval-list"><div class="approvals-refresh" id="approvals-refresh">Pull to refresh</div><div class="empty"><svg class="check-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m20 6-11 11-5-5"></path></svg><span>All clear — no actions pending</span></div></div></section>
     <section class="panel" id="panel-activity"><div class="activity-list" id="activity-list"><div class="activity-filters" id="activity-filters"><button class="filter-btn active" data-filter="all" onclick="setActivityFilter('all')">All</button><button class="filter-btn" data-filter="auto" onclick="setActivityFilter('auto')">Auto</button><button class="filter-btn" data-filter="flagged" onclick="setActivityFilter('flagged')">Flagged</button><button class="filter-btn" data-filter="blocked" onclick="setActivityFilter('blocked')">Blocked</button></div><div class="empty">No activity yet. Start chatting.</div></div></section>
-    <section class="panel" id="panel-insights"><div class="insights"><div class="greeting-box"><p class="greeting-title" id="greeting-text">Good day</p><p class="greeting-goal" id="goal-text">Goal: Loading...</p></div><div class="stat-grid" id="stat-grid"></div><section class="insights-card"><h3>Today's Summary</h3><p id="summary-text">Loading summary...</p></section><section class="insights-card"><h3>Suggestions</h3><div id="suggestions-list"><p class="muted">Loading suggestions...</p></div></section></div></section>
+    <section class="panel" id="panel-insights"><div class="insights"><div class="greeting-box"><p class="greeting-title" id="greeting-text">Good day</p><p class="greeting-goal" id="goal-text">Goal: Loading...</p></div><div class="stat-grid" id="stat-grid"></div><section class="insights-card"><h3>Today's Summary</h3><p id="summary-text">Loading summary...</p></section><section class="insights-card"><h3>Suggestions</h3><div id="suggestions-list"><p class="muted">Loading suggestions...</p></div></section>
+<section class="insights-card benchmark-card" id="benchmark-card"><div class="benchmark-header"><div><h3>Security Benchmark</h3><p class="muted">AgentHarm benchmark + Council scenarios</p></div><span class="benchmark-pill" id="benchmark-timestamp"></span></div><div id="benchmark-content"><p class="muted">Loading benchmark...</p></div></section></div></section>
   </main>
   <nav class="bottom-nav" aria-label="Primary navigation">
     <button class="tab active" data-tab="chat" onclick="switchTab('chat')"><svg viewBox="0 0 24 24"><path d="M4 5h16v10H7l-3 3V5Z"></path></svg><span>Chat</span></button>
@@ -633,6 +651,7 @@ async function loadInsights() {
   document.getElementById('summary-text').textContent = 'Loading summary...';
   document.getElementById('suggestions-list').innerHTML = '<p class="muted">Loading suggestions...</p>';
   clearPanelError('panel-insights');
+  renderBenchmarkState();
   let statsData, settingsData, activityData;
   try {
     const [statsRes, settingsRes, activityRes] = await Promise.all([
@@ -717,6 +736,92 @@ function buildSuggestions(events, stats) {
     suggestions.push('Your approvals look consistent. You can likely auto-approve low-risk repeated actions to speed things up.');
   }
   return suggestions;
+}
+
+let benchmarkState = { loading: true, data: null, error: null };
+
+function renderBenchmarkState() {
+  const content = document.getElementById('benchmark-content');
+  const pill = document.getElementById('benchmark-timestamp');
+  if (!content) return;
+  if (pill) {
+    pill.style.display = 'none';
+    pill.textContent = '';
+  }
+  if (benchmarkState.loading) {
+    content.innerHTML = '<p class="muted">Loading benchmark...</p>';
+    return;
+  }
+  if (benchmarkState.error) {
+    content.innerHTML = `<p class="muted">${escapeHtml(benchmarkState.error)}</p>`;
+    return;
+  }
+  if (!benchmarkState.data || !benchmarkState.data.metrics) {
+    content.innerHTML = '<p class="muted">Run benchmark from Settings to see results.</p>';
+    return;
+  }
+  const metrics = benchmarkState.data.metrics || {};
+  const harm = Number(metrics.harm_prevention ?? 0);
+  const falsePositive = Number(metrics.false_positive ?? 0);
+  const accuracy = Number(metrics.overall_accuracy ?? 0);
+  const latency = Number(metrics.avg_latency_ms ?? 0);
+  const generatedAt = benchmarkState.data.generated_at ? new Date(benchmarkState.data.generated_at).toLocaleString() : '';
+  if (pill && generatedAt) {
+    pill.textContent = generatedAt;
+    pill.style.display = 'inline-flex';
+  }
+  const harmPercent = clampPercent(harm);
+  const harmHeight = Math.max(5, harmPercent);
+  content.innerHTML = `
+    <div class="benchmark-stat-grid">
+      <div class="benchmark-stat green"><div class="label">Harm Prevention</div><div class="value">${formatPercent(harm)}</div></div>
+      <div class="benchmark-stat red"><div class="label">False Positive</div><div class="value">${formatPercent(falsePositive)}</div></div>
+      <div class="benchmark-stat blue"><div class="label">Accuracy</div><div class="value">${formatPercent(accuracy)}</div></div>
+      <div class="benchmark-stat yellow"><div class="label">Avg Latency</div><div class="value">${Math.round(Math.max(0, latency))}ms</div></div>
+    </div>
+    <div class="benchmark-bars">
+      <div class="benchmark-bar">
+        <div class="bar-fill" style="height:100%">0%</div>
+        <div class="benchmark-bar-label">No Council<br>0% protection</div>
+      </div>
+      <div class="benchmark-bar">
+        <div class="bar-fill green" style="height:${harmHeight}%">${formatPercent(harm)}</div>
+        <div class="benchmark-bar-label">With Council<br>${formatPercent(harm)} protection</div>
+      </div>
+    </div>
+    <p class="benchmark-note">Tested on 100 scenarios including AgentHarm benchmark data (ICLR 2025).</p>
+  `;
+}
+
+function formatPercent(value, digits = 1) {
+  const num = Number(value);
+  if (!Number.isFinite(num)) return '0%';
+  return `${Math.max(0, num).toFixed(digits)}%`;
+}
+
+function clampPercent(value) {
+  const num = Number(value);
+  if (!Number.isFinite(num)) return 0;
+  return Math.min(100, Math.max(0, num));
+}
+
+async function refreshBenchmarkResults() {
+  benchmarkState = { ...benchmarkState, loading: true, error: null };
+  renderBenchmarkState();
+  try {
+    const res = await fetch('/api/benchmark/results');
+    if (res.status === 404) {
+      benchmarkState = { loading: false, data: null, error: null };
+    } else if (!res.ok) {
+      throw new Error('Benchmark request failed');
+    } else {
+      const data = await res.json();
+      benchmarkState = { loading: false, data, error: null };
+    }
+  } catch (_) {
+    benchmarkState = { loading: false, data: null, error: 'Unable to load benchmark results right now.' };
+  }
+  renderBenchmarkState();
 }
 let settingsQuestions = [];
 let auditActions = [];
@@ -972,6 +1077,7 @@ window.addEventListener('focusout', () => setTimeout(updateKeyboardOffset, 50));
 updateKeyboardOffset();
 updateApprovalBadge();
 refreshGatewayStatus();
+refreshBenchmarkResults();
 maybeStartOnboarding();
 </script>
 </body>
