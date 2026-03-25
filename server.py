@@ -529,6 +529,30 @@ async def approve_action(req: ApprovalRequest):
     raise HTTPException(status_code=404, detail="Action not found or not pending")
 
 
+@app.post("/api/override")
+async def override_blocked(req: ApprovalRequest):
+    """Override a previously blocked action, logging verification receipt."""
+    action = db.get_action(req.action_id)
+    if not action or action.status != ActionStatus.BLOCKED:
+        raise HTTPException(status_code=404, detail="Blocked action not found")
+
+    action.status = ActionStatus.APPROVED
+    action.approved_by = "user_override"
+    db.upsert_action(action)
+
+    audit_log.log_event(ActivityEvent(
+        event_type="action_overridden",
+        action_id=req.action_id,
+        summary=f"Override: {action.action.description[:80]}",
+        tier=action.tier,
+    ))
+
+    if verification_chain and action.council_result:
+        verification_chain.create_receipt(action.action, action.council_result, Tier.APPROVE, risk_profile)
+
+    return {"status": "overridden", "action": _serialize_evaluated(action)}
+
+
 @app.get("/api/approvals")
 async def get_pending_approvals():
     """Get all actions pending approval."""
