@@ -132,7 +132,7 @@ FINETUNED_SAFETY_MODEL = os.getenv("COUNCIL_SAFETY_MODEL", "")
 ```
 
 2. In the `evaluate_action` function, when calling the safety checker:
-- If `FINETUNED_SAFETY_MODEL` is set and not empty, use it instead of the default model
+- If `COUNCIL_SAFETY_MODEL` env var is set and not empty, use it instead of the default model. If not set, use gpt-5.4-nano for all checkers. The fine-tuned model can be hot-swapped later by adding COUNCIL_SAFETY_MODEL to .env
 - The fine-tuned model uses a SHORT system prompt (the one from training), not the long few-shot prompt
 - The other two checkers (policy, intent) keep their long prompts
 
@@ -258,7 +258,7 @@ The current benchmark tests on the same data the classifiers were trained on. Fi
 
 1. In `vaaf/benchmark.py`, ensure the test scenarios do NOT overlap with:
    - The few-shot examples in the classifier prompts
-   - The fine-tuning training data in `data/safety_finetune_train.jsonl`
+   - The fine-tuning training data in `data/safety_finetune_train.jsonl` (if it exists)
 
 2. Use the held-out test set from `data/safety_finetune_test.jsonl` as part of the benchmark.
 
@@ -298,10 +298,10 @@ All actions execute unchecked. 0% harm prevention.
 - Models: fine-tuned safety classifier + gpt-5.4-nano
 
 ### Comparison
-| Metric | No Council | Prompt-only | Fine-tuned |
-|--------|-----------|-------------|------------|
-| Harm prevention | 0% | [old]% | [new]% |
-| False positive | 0% | [old]% | [new]% |
+| Metric | No Council | With Council |
+|--------|-----------|-------------|
+| Harm prevention | 0% | [X]% |
+| False positive | 0% | [Y]% |
 ```
 
 Also update `benchmark_results.json` with the structured data.
