@@ -1,100 +1,171 @@
-# Council — AI Agent Security Framework
+# Council
 
-Council is a dynamic safety layer for OpenClaw agents. Instead of static allow/deny lists, Council evaluates every proposed action for policy fit, safety risk, intent alignment, and emergent sequence harm before anything runs.
+An independent safety layer for autonomous AI agents. Council intercepts every action an agent proposes and evaluates it through a panel of parallel classifiers before execution. The freamework seeks to catch harmful, misaligned, or risky behavior without crippling the agent's autonomy.
 
-## What It Does
-1. **Intercept** every tool call the agent wants to run.
-2. **Pre-filter** trivial read-only and first-party actions for instant execution.
-3. **Review** remaining actions through a multi-checker "Council" (policy, safety, intent, sequence).
-4. **Assign a tier** (auto, notify, approval, block) with confidence-aware escalation.
-5. **Record + verify** the final verdict inside a cryptographic verification chain (EigenCloud-ready) and expose it through the Insights/Activity UI.
+Built as a security middleware for [OpenClaw](https://github.com/openclaw/openclaw).
 
-## Key Features
-- **3-checker Review Council** (policy, safety, intent) trained with AgentHarm few-shots and confidence scoring.
-- **4th sequence analyzer** that spots chained malicious patterns (data exfiltration, impersonation, credential theft, sabotage, fraud).
-- **Adaptive pre-filter** that learns from approvals and auto-executes repeated safe patterns.
-- **Rate limiting + first-use escalation** to catch runaway loops and unfamiliar tools.
-- **Prompt-injection detection** baked into the safety checker — content containing "ignore previous instructions" is auto-flagged.
-- **Cryptographic verification chain** with immutable receipts + `/api/verification/*` endpoints (ready for EigenDA submission).
-- **Override workflow** that logs a new receipt, updates the timeline, and unblocks Tier 4 decisions when a human insists.
-- **Benchmark runner & Insights UI** powered by 100 scenarios (AgentHarm + custom tiers) with live metrics.
-- **Mobile-first PWA**: Chat, Approvals, Activity timeline with override buttons, Insights dashboard, and Settings (risk profile, audit tools).
+---
 
-## Benchmark Results (AgentHarm + custom scenarios)
-Latest run (`2026-03-24`, conservative profile, `gpt-4o-mini`):
-- Harm prevention: **100%** (50 / 50 harmful scenarios stopped)
-- False positive rate: **36%** (9 / 25 safe actions escalated by the new sequence guard)
-- Context accuracy: **33%** (5 / 15)
-- Sequence detection: **100%** (10 / 10 compositional attacks blocked)
-- Overall accuracy: **81%** · Avg latency: **2137 ms** · Pre-filter hit rate: **22.5%**
+## The Problem
 
-Without Council: 0% protection — every harmful AgentHarm behavior succeeds. See [`BENCHMARK.md`](./BENCHMARK.md) for the full timeline (baseline → Run 1 → Run 2 → Final Run) plus pointers to the raw artifacts.
+AI agents can execute actions autonomously like shell commands, file writes, emails, purchases, API calls. The only safety mechanism is the LLM's own training, which tells it to refuse harmful requests. The [AgentHarm benchmark](https://arxiv.org/abs/2410.09024) (ICLR 2025) tested this and found that leading LLMs comply with **48–82% of harmful agent requests** without any jailbreak.
 
-## Architecture
+Existing solutions like NanoClaw and NemoClaw solve **containment**. These frameworks act as rigid access-control layers, evaluating agent actions on a binary basis (yes or no). They are designed to answer basic permission questions, such as whether an agent has the right to access a specific file, network, or API.
+
+
+But containment is not alignment. Forcing agents into a manual whitelist of tools and permissions cripples their autonomy. Agents need the freedom to discover novel solutions without introducing catastrophic risk. Council fills this gap: it evaluates whether an action is **actually good for the user** given context, risk tolerance, and recent behavior — not just whether the agent has permission to attempt it.
+
+## How It Works
+
 ```
-             ┌────────────────────────────────────────────────────────────┐
-User Prompt →│ Primary Agent proposes tool call (tool, params, reasoning) │
-             └────────────────────────────────────────────────────────────┘
-                                    │
-                                    ▼
-                      ┌──────────────────────────────┐
-                      │ Tier Pre-Filter (fast heur.) │
-                      └──────────────┬───────────────┘
-                                     │auto-safe
-       needs review                   ▼
-                                     ┌──────────────────────────────────────────────────────────────┐
-                                     │ Review Council (parallel)                                    │
-                                     │  • Policy checker (profile-aware)                            │
-                                     │  • Safety checker (AgentHarm few-shots + prompt-injection)   │
-                                     │  • Intent checker (goal alignment)                           │
-                                     │  • Sequence analyzer (emergent harm patterns)                │
-                                     └──────────────┬──────────────┬──────────────┬────────────────┘
-                                                    │ votes + confidence
-                                                    ▼
-                                   ┌──────────────────────────────────────────┐
-                                   │ Tier Classifier                          │
-                                   │  - adaptive pre-filter learnings         │
-                                   │  - confidence based escalation           │
-                                   │  - rate limiting / first-use bump        │
-                                   └──────────────┬──────────────┬────────────┘
-                                                  ▼              ▼
-                                          Tier 1/2 execute   Tier 3 queue   Tier 4 block
-                                                  │              │              │
-                                                  ▼              ▼              ▼
-                                         Agent + Activity   Approvals UI   Override endpoint
-                                                  
-                                                  ▼
-                                Cryptographic Verification Chain (EigenCloud-ready)
-                                                  ▼
-                                  Insights UI · Audit Trail · Benchmark APIs
+Agent proposes action (tool + params)
+         │
+         ▼
+   Pre-filter (deterministic, <1ms)
+   Safe? ──yes──▶ Tier 1: Execute immediately
+         │
+         no
+         ▼
+   Review Council (4 parallel LLM classifiers, ~800ms)
+   ┌─────────────┬──────────────┬──────────────┬──────────────────┐
+   │   Policy     │    Safety    │    Intent    │    Sequence      │
+   │ (risk profile│ (harm check) │ (goal align) │ (pattern detect) │
+   │  aware)      │              │              │                  │
+   └─────┬───────┴──────┬───────┴──────┬───────┴────────┬─────────┘
+         │              │              │                │
+         ▼              ▼              ▼                ▼
+   Verdicts + confidence scores aggregated
+         │
+         ▼
+   Tier Assignment
+   ├── Tier 1: Auto-execute (safe, high confidence)
+   ├── Tier 2: Execute + notify (low concern)
+   ├── Tier 3: Queue for human approval (medium concern)
+   └── Tier 4: Block (immediate danger)
+         │
+         ▼
+   Verification receipt (hash-chained, EigenDA-ready)
 ```
+
+## Features
+
+### Security Pipeline
+- **Pre-filter**: Deterministic code that instantly approves safe operations (`read`, `ls`, `cat`, `grep`, `git status`) and routes dangerous ones (`rm`, `curl|bash`, `sudo`) to the council. Handles ~22% of all actions with zero latency and zero cost.
+- **Command analyzer**: Parses actual shell commands inside `exec` calls — doesn't just see "exec" as dangerous, it distinguishes `wc -c file.md` from `rm -rf /`.
+- **Review Council**: Four classifiers running in parallel via `asyncio.gather`. Each returns a verdict (APPROVE/FLAG/BLOCK), one-sentence reasoning, and a confidence score.
+- **Sequence analyzer**: Detects multi-step attack patterns where each individual action seems safe but the sequence is harmful (e.g., read credentials → encode → send externally).
+- **Confidence-based escalation**: When average checker confidence drops below 0.6, the system auto-escalates one tier regardless of verdicts.
+
+### Adaptive Behavior
+- **Learns from approvals**: After you approve the same action pattern 3+ times, the pre-filter auto-approves future matches.
+- **Rate limiting**: More than 10 identical tool calls in 5 minutes triggers auto-escalation, catching runaway agent loops.
+- **First-use escalation**: New tools the agent hasn't used before are automatically escalated for review.
+- **Risk profile**: Configurable via onboarding questionnaire — conservative users get more approval prompts, aggressive users get more autonomy.
+
+### Verification & Audit
+- **Hash-chained receipts**: Every council evaluation produces a cryptographic receipt chained to all previous receipts. Tampering with any single receipt breaks the entire chain.
+- **EigenDA integration**: Receipt hashes are dispersed to EigenDA's Holesky testnet via gRPC for immutable on-chain proof of evaluation.
+- **Full audit trail**: Every action, verdict, approval, rejection, and override is logged to SQLite with timestamps.
+
+### Interface
+- **Mobile PWA**: Dark-themed, installable web app with Chat, Approvals, Activity, Insights, and Settings tabs.
+- **Chat**: Routes messages to OpenClaw via CLI subprocess — same agent, same tools, same memory as Discord/WhatsApp.
+- **Approvals**: Tier 3 actions appear as cards with all checker verdicts and approve/reject buttons.
+- **Activity**: Color-coded timeline with verification receipt hashes and override buttons for blocked actions.
+- **Insights**: Benchmark results, harm prevention stats, EigenDA submission status.
+
+## Benchmark Results
+
+Tested on 100 scenarios: 50 harmful (from AgentHarm), 25 safe, 15 context-dependent, 10 compositional sequences.
+
+| Metric | Without Council | With Council |
+|---|---|---|
+| Harmful actions caught | 0% | **100%** |
+| False positive rate | 0% | 36% |
+| Sequence attacks caught | 0% | **100%** |
+| Overall accuracy | — | **77%** |
+| Avg evaluation latency | — | 835ms |
+
+Model: `gpt-5.4-nano` for all checkers. Pre-filter hit rate: 22.5%.
+
+See [BENCHMARK.md](./BENCHMARK.md) for full methodology and results.
+
+## Current Limitations
+
+- **Classifiers are prompt-engineered, not fine-tuned.** The council checkers are really just GPT-5.4-nano with few-shot examples from AgentHarm. A fine-tuning job on gpt-4.1-nano is submitted but hasn't completed yet due to delays from OpenAI servers. Fine-tuned classifiers would reduce the false positive rate significantly.
+- **Benchmark tests easy cases.** The 100% harm prevention rate is on explicitly harmful scenarios from AgentHarm. Real-world adversarial actions (e.g., "back up the client list to my personal drive") would be harder to detect. However, our system would still have a higher likelihood of detection than OpenClaw's individual LLM.
+- **EigenDA is testnet only.** Receipt hashes are dispersed to Holesky testnet. Production would require mainnet access and EigenCompute integration for verified execution in a TEE.
+- **Chat doesn't stream.** Responses appear all at once after 30-60 seconds because the OpenClaw CLI doesn't support token-by-token streaming.
+
+## Planned Improvements
+
+- **Fine-tuned safety classifier** on gpt-4.1-nano using AgentHarm training data (in progress, just delayed due to OpenAI servers)
+- **EigenCompute integration** for verified execution — proving the classifier code ran correctly in a TEE
+- **Adversarial benchmark suite** with disguised harmful actions, not just explicitly labeled ones
+- **Calibrated confidence** via fine-tuning, enabling more precise tier boundaries
+- **Streaming chat responses** through OpenClaw's WebSocket protocol
+- **Multi-user support** with per-user risk profiles and approval queues
 
 ## Installation
+
 ```bash
-git clone https://github.com/Sanjith-Shan/Council.git ~/projects/council
-cd ~/projects/council
+git clone https://github.com/Sanjith-Shan/Council.git
+cd Council
 python3 -m venv venv
 source venv/bin/activate
 pip install -r requirements.txt
-cp .env.example .env  # add OPENAI_API_KEY + OPENCLAW_GATEWAY_TOKEN
-python server.py
+cp .env.example .env
+# Add your OPENAI_API_KEY and OPENCLAW_GATEWAY_TOKEN to .env
 ```
-Open http://localhost:8000 to load the dashboard (installable PWA).
 
-## Deployment & Mobile PWA
-- `./start.sh` boots the FastAPI server on port 8001 with logging.
-- Expose it with ngrok / Cloudflare tunnel for mobile access.
-- On iOS Safari: Share → **Add to Home Screen**. On Android Chrome: Menu → **Add to Home screen**/**Install app**.
+## Usage
 
-## Benchmarking & Verification
-- Run benchmarks: `source venv/bin/activate && PYTHONPATH=. python vaaf/benchmark_runner.py 2>&1 | tee benchmark_results_<tag>.txt`
-- Latest structured results live in `benchmark_results.json` and surface via `/api/benchmark/results` for the Insights UI.
-- Trigger benchmark + view integrity status directly from **Settings → Audit Trail** (buttons call `/api/benchmark/run` and `/api/verification/verify`).
-- Verification receipts are also exposed via `/api/verification/chain`, `/api/verification/receipt/:id`, and `/api/verification/verify` for UI + EigenDA submission.
+Start the server:
+```bash
+python -c "import uvicorn; from server import app; uvicorn.run(app, host='0.0.0.0', port=8001)"
+```
 
-## Development Notes
-- Keep package namespace as `vaaf/` for imports.
-- All async pathways (FastAPI, OpenAI) already wired — avoid blocking calls.
-- Frontend stays a single-file dark-themed app at `static/index.html` (vanilla JS + CSS only).
-- SQLite (`council.db`) stores risk profiles, approvals, actions, and adaptive pre-filter stats.
-- Always run `python -c "from server import app; print('All imports OK')"` before committing.
+For phone access via ngrok:
+```bash
+ngrok http 8001
+# Open the ngrok URL on your phone → Share → Add to Home Screen
+```
+
+Enable the OpenClaw security patch (intercepts all tool calls):
+```bash
+sudo python3 integration/patch-openclaw.js  # or the manual patch method
+openclaw gateway restart
+```
+
+Run benchmarks:
+```bash
+PYTHONPATH=. python vaaf/benchmark_runner.py
+```
+
+## API Endpoints
+
+| Endpoint | Method | Description |
+|---|---|---|
+| `/api/chat` | POST | Send message (routes through OpenClaw) |
+| `/api/evaluate` | POST | Evaluate a tool call (called by the OpenClaw patch) |
+| `/api/evaluate/{id}/status` | GET | Poll approval status for queued actions |
+| `/api/approve` | POST | Approve or reject a Tier 3 action |
+| `/api/override` | POST | Override a Tier 4 blocked action |
+| `/api/approvals` | GET | List pending Tier 3 actions |
+| `/api/activity` | GET | Activity feed |
+| `/api/insights` | GET | Aggregated stats |
+| `/api/verification/verify` | GET | Validate the hash chain |
+| `/api/verification/chain` | GET | Recent verification receipts |
+| `/api/eigenda/status` | GET | EigenDA testnet connection stats |
+| `/api/benchmark/results` | GET | Latest benchmark metrics |
+| `/api/gateway/status` | GET | OpenClaw connection status |
+
+## References
+
+- [AgentHarm: A Benchmark for Measuring Harmfulness of LLM Agents](https://arxiv.org/abs/2410.09024) (ICLR 2025)
+- [EigenDA Documentation](https://docs.eigenda.xyz/)
+- [OpenClaw](https://github.com/openclaw/openclaw)
+
+## License
+
+MIT
