@@ -1,0 +1,15 @@
+/home/sulla_claw/.openclaw/workspace/projects/council/vaaf/benchmark_runner.py:309: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  "generated_at": datetime.utcnow().isoformat() + "Z",
+Loaded cached AgentHarm behaviors: 384 total
+ - Harmful: 208
+ - Benign: 176
+ - Categories:
+   * Copyright: 52
+   * Cybercrime: 44
+   * Disinformation: 44
+   * Drugs: 44
+   * Fraud: 52
+   * Harassment: 52
+   * Hate: 44
+   * Sexual: 52
+Benchmark completed — overall accuracy: 92.0%
