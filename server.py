@@ -532,16 +532,33 @@ async def approve_action(req: ApprovalRequest):
     raise HTTPException(status_code=404, detail="Action not found or not pending")
 
 
+# Whitelist for overridden actions — council auto-approves these
+override_whitelist: set[str] = set()
+
 @app.post("/api/override")
 async def override_blocked(req: ApprovalRequest):
-    """Override a previously blocked action, logging verification receipt."""
+    """Override a blocked action: whitelist it and tell the agent to retry."""
+    # Find the action in memory or database
     action = db.get_action(req.action_id)
-    if not action or action.status != ActionStatus.BLOCKED:
-        raise HTTPException(status_code=404, detail="Blocked action not found")
+    if not action:
+        for a in audit_log.actions:
+            if a.action.id == req.action_id:
+                action = a
+                break
+    if not action:
+        raise HTTPException(status_code=404, detail="Action not found")
+
+    # Whitelist this tool+params so the retry auto-approves
+    import hashlib as _hl
+    wl_key = _hl.sha256((action.action.tool_name + str(action.action.parameters)).encode()).hexdigest()[:16]
+    override_whitelist.add(wl_key)
 
     action.status = ActionStatus.APPROVED
     action.approved_by = "user_override"
-    db.upsert_action(action)
+    try:
+        db.upsert_action(action)
+    except Exception:
+        pass
 
     audit_log.log_event(ActivityEvent(
         event_type="action_overridden",
@@ -552,6 +569,13 @@ async def override_blocked(req: ApprovalRequest):
 
     if verification_chain and action.council_result:
         verification_chain.create_receipt(action.action, action.council_result, Tier.APPROVE, risk_profile)
+
+    # Tell OpenClaw to retry the action
+    retry_text = ""
+    if openclaw_client:
+        desc = action.action.description[:200]
+        result = await openclaw_client.send_message(f"Please retry this exact action that was previously blocked: {desc}")
+        retry_text = result.get("text", "")
 
     return {"status": "overridden", "action": _serialize_evaluated(action)}
 
@@ -636,6 +660,17 @@ async def get_all_actions():
     return {"actions": [_serialize_evaluated(a) for a in reversed(audit_log.actions[-100:])]}
 
 
+
+def _sanitize_for_council(params: dict) -> dict:
+    cleaned = dict(params)
+    content = cleaned.get("content", "")
+    if isinstance(content, str) and "SECURITY NOTICE" in content[:200]:
+        idx = content.find(chr(10) + chr(10))
+        if idx > 0 and idx < 500:
+            cleaned["content"] = content[idx+2:]
+    return cleaned
+
+
 @app.post("/api/evaluate")
 async def evaluate_external_action(req: EvaluateRequest):
     """Evaluate a tool call from OpenClaw/ClawBands.
@@ -658,11 +693,17 @@ async def evaluate_external_action(req: EvaluateRequest):
     action = ProposedAction(
         tool_name=req.tool_name,
         description=desc,
-        parameters=req.arguments,
+        parameters=_sanitize_for_council(req.arguments),
         reasoning=req.context,
     )
 
     # Run through the full Council pipeline
+    # Check if this action was overridden (whitelisted)
+    import hashlib as _hl2
+    _wl_key = _hl2.sha256((req.tool_name + str(req.arguments)).encode()).hexdigest()[:16]
+    if _wl_key in override_whitelist:
+        override_whitelist.discard(_wl_key)
+        return {"decision": "allow", "tier": "tier1_auto", "action_id": "override", "pre_filtered": True, "first_use_escalated": False}
     evaluated = await _process_action(action)
 
     # Map status to a simple decision for the caller

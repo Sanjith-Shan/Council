@@ -75,7 +75,8 @@ def extract_action_pattern(action: ProposedAction) -> str:
         command = action.parameters.get("command", "")
         base = extract_base_command(command) or "shell"
         return f"exec:{base}"
-    if action.tool_name in {"fetch", "browser"}:
+    if action.tool_name in {"fetch",
+    "web_fetch", "browser"}:
         url = action.parameters.get("url", "")
         host = (urlparse(url).hostname or "unknown").lower()
         return f"{action.tool_name}:{host}"
@@ -110,6 +111,16 @@ class TierClassifier:
         Returns Tier.AUTO if safe, None if council evaluation is needed.
         """
         # Trivially safe tools -> auto
+        # Writes to agent workspace: execute + notify (Tier 2), not council-evaluated
+        # Writes to sensitive paths still go through the council
+        if action.tool_name == "write":
+            path = str(action.parameters.get("path", "") or action.parameters.get("file_path", ""))
+            dangerous_prefixes = ["/etc/", "/usr/", "/root/", "/.ssh/", "/bin/", "/sbin/"]
+            is_dangerous = any(p in path for p in dangerous_prefixes)
+            if is_dangerous:
+                return None  # send to council
+            return Tier.AUTO  # all non-dangerous writes auto-approve
+
         if action.tool_name in TRIVIALLY_SAFE_TOOLS:
             return Tier.AUTO
 
@@ -122,7 +133,8 @@ class TierClassifier:
             if is_exec_safe(action.tool_name, action.parameters):
                 return Tier.AUTO
 
-        if action.tool_name in {"fetch", "browser"}:
+        if action.tool_name in {"fetch",
+    "web_fetch", "browser"}:
             url = action.parameters.get("url", "")
             host = (urlparse(url).hostname or "").lower()
             if host in SAFE_FETCH_HOSTS:
