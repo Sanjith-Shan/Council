@@ -72,7 +72,7 @@ def start_finetune():
     print("Starting fine-tuning job...")
     job = client.fine_tuning.jobs.create(
         training_file=file_obj.id,
-        model="gpt-4o-mini-2024-07-18",
+        model="gpt-4.1-nano-2025-04-14",
         suffix="council-safety",
         hyperparameters={"n_epochs": 3},
     )
@@ -153,7 +153,7 @@ Commit: "feat: integrate fine-tuned safety model"
 
 In `vaaf/council.py`:
 
-1. Change the default model from `gpt-4o-mini` to `gpt-5.4-nano`:
+1. Change the default model from `gpt-4.1-nano` to `gpt-5.4-nano`:
 ```python
 DEFAULT_COUNCIL_MODEL = "gpt-5.4-nano"
 ```
@@ -284,7 +284,7 @@ Update `BENCHMARK.md`:
 ## Methodology
 - Training data: 80 examples (AgentHarm + custom) used for fine-tuning
 - Test data: 50+ held-out scenarios NOT seen during training
-- Models: fine-tuned gpt-4o-mini (safety), gpt-5.4-nano (policy, intent)
+- Models: fine-tuned gpt-4.1-nano (safety), gpt-5.4-nano (policy, intent)
 
 ## Results
 ### Without Council
@@ -321,7 +321,7 @@ In `static/index.html`:
    - Link to blob explorer: https://blobs-v2-testnet-holesky.eigenda.xyz/
 
 2. In Settings, add "Model Info" section:
-   - Safety checker: "Fine-tuned gpt-4o-mini (council-safety)" or model ID
+   - Safety checker: "Fine-tuned gpt-4.1-nano (council-safety)" or model ID
    - Policy/Intent checkers: "gpt-5.4-nano"
    - Show cost estimate per evaluation
 
@@ -348,7 +348,7 @@ Commit: "chore: final verification and cleanup"
 ## NOTES
 
 - OPENAI_API_KEY is in .env (needed for fine-tuning and council calls)
-- Fine-tuning gpt-4o-mini costs ~$0.06 for 80 examples. Takes 15-30 min.
+- Fine-tuning gpt-4.1-nano costs ~$0.06 for 80 examples. Takes 15-30 min.
 - gpt-5.4-nano model ID: `gpt-5.4-nano` (direct, no special access needed)
 - EigenDA Holesky testnet disperser: `disperser-holesky.eigenda.xyz:443` (public, no auth)
 - If EigenDA proto compilation fails, the client degrades to logging mode. Don't block on this.
