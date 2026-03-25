@@ -32,6 +32,7 @@ from vaaf.risk_profile import (
     ONBOARDING_QUESTIONS, build_profile, profile_to_context,
 )
 from vaaf.openclaw_client import OpenClawClient
+from vaaf.verification import VerificationChain
 
 load_dotenv()
 
@@ -47,6 +48,10 @@ user_goal = db.get_user_setting("user_goal", "Grow my online business and increa
 user_name = db.get_user_setting("user_name", "there")
 council_enabled = db.get_user_setting("council_enabled", True)
 council_model = db.get_user_setting("council_model", "gpt-4o-mini")
+# EigenCloud verifies the evaluation CODE ran correctly (execution integrity)
+# Council verifies the evaluation RESULT is correct (intent alignment)
+# Together they prove: the right code ran AND produced the right answer
+verification_chain = VerificationChain(db=db)
 chat_history: list[dict] = []  # OpenAI message format
 
 
@@ -441,6 +446,18 @@ async def chat_stream(req: ChatRequest):
     )
 
 
+def _record_receipt(evaluated):
+    if not verification_chain:
+        return
+    # Production: submit receipt.hash to EigenDA via AgentKit SDK for immutable on-chain storage
+    verification_chain.create_receipt(
+        evaluated.action,
+        evaluated.council_result,
+        evaluated.tier,
+        risk_profile,
+    )
+
+
 async def _process_action(action: ProposedAction):
     """Run an action through the full Council pipeline."""
 
@@ -452,6 +469,7 @@ async def _process_action(action: ProposedAction):
         if evaluated.status == ActionStatus.EXECUTED:
             evaluated.execution_result = simulate_tool_execution(action)
         audit_log.log_action(evaluated)
+        _record_receipt(evaluated)
         return evaluated
 
     if pre_tier == Tier.AUTO:
@@ -460,6 +478,7 @@ async def _process_action(action: ProposedAction):
         result = simulate_tool_execution(action)
         evaluated.execution_result = result
         audit_log.log_action(evaluated)
+        _record_receipt(evaluated)
         return evaluated
 
     # Step 2: Run through review council
@@ -486,6 +505,7 @@ async def _process_action(action: ProposedAction):
         evaluated.execution_result = result
 
     audit_log.log_action(evaluated)
+    _record_receipt(evaluated)
     return evaluated
 
 
@@ -552,6 +572,35 @@ async def benchmark_results():
     except json.JSONDecodeError as exc:  # pragma: no cover - corrupted file
         raise HTTPException(status_code=500, detail=f"Benchmark results unreadable: {exc}")
     return {"results": data}
+
+
+@app.get("/api/verification/chain")
+async def get_verification_chain(limit: int = 20):
+    """Return the most recent verification receipts."""
+    capped = min(max(limit, 0), 200)
+    if capped == 0:
+        return {"receipts": []}
+    receipts = verification_chain.get_recent(capped) if verification_chain else []
+    return {"receipts": receipts}
+
+
+@app.get("/api/verification/verify")
+async def verify_chain():
+    """Run full-chain verification."""
+    if not verification_chain:
+        raise HTTPException(status_code=503, detail="Verification chain unavailable")
+    return verification_chain.verify()
+
+
+@app.get("/api/verification/receipt/{action_id}")
+async def get_verification_receipt(action_id: str):
+    """Return a single verification receipt if it exists."""
+    if not verification_chain:
+        raise HTTPException(status_code=503, detail="Verification chain unavailable")
+    receipt = verification_chain.get_receipt(action_id)
+    if not receipt:
+        raise HTTPException(status_code=404, detail="Receipt not found")
+    return {"receipt": receipt}
 
 
 @app.get("/api/actions")
