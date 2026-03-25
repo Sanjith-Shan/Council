@@ -1,4 +1,4 @@
-# Council
+# Council - AI Agent Security Framework
 
 An independent safety layer for autonomous AI agents. Council intercepts every action an agent proposes and evaluates it through a panel of parallel classifiers before execution. The freamework seeks to catch harmful, misaligned, or risky behavior without crippling the agent's autonomy.
 
