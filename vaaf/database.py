@@ -55,6 +55,14 @@ class CouncilDatabase:
                 value_json TEXT NOT NULL,
                 updated_at TEXT NOT NULL
             );
+
+            CREATE TABLE IF NOT EXISTS approval_patterns (
+                tool_name TEXT NOT NULL,
+                pattern TEXT NOT NULL,
+                count INTEGER NOT NULL DEFAULT 0,
+                last_approved TEXT NOT NULL,
+                PRIMARY KEY (tool_name, pattern)
+            );
             """
         )
         self.conn.commit()
@@ -130,6 +138,31 @@ class CouncilDatabase:
         if not row:
             return default
         return json.loads(row[0])
+
+    def record_approval_pattern(self, tool_name: str, pattern: str):
+        if not tool_name or not pattern:
+            return
+        now = datetime.utcnow().isoformat()
+        self.conn.execute(
+            """
+            INSERT INTO approval_patterns (tool_name, pattern, count, last_approved)
+            VALUES (?, ?, 1, ?)
+            ON CONFLICT(tool_name, pattern) DO UPDATE SET
+                count = approval_patterns.count + 1,
+                last_approved = excluded.last_approved
+            """,
+            (tool_name, pattern, now),
+        )
+        self.conn.commit()
+
+    def get_approval_pattern_count(self, tool_name: str, pattern: str) -> int:
+        if not tool_name or not pattern:
+            return 0
+        row = self.conn.execute(
+            "SELECT count FROM approval_patterns WHERE tool_name = ? AND pattern = ?",
+            (tool_name, pattern),
+        ).fetchone()
+        return int(row[0]) if row else 0
 
     def _parse_action_row(self, payload_json: str) -> EvaluatedAction:
         payload = json.loads(payload_json)

@@ -24,7 +24,7 @@ from vaaf.models import (
 )
 from vaaf.council import evaluate_action
 from vaaf.benchmark_runner import run_benchmark, BENCHMARK_RESULTS_PATH
-from vaaf.tier import TierClassifier
+from vaaf.tier import TierClassifier, extract_action_pattern
 from vaaf.agent import get_agent_response, extract_proposed_actions, simulate_tool_execution
 from vaaf.audit import AuditLog
 from vaaf.database import CouncilDatabase
@@ -475,8 +475,9 @@ async def _process_action(action: ProposedAction):
     if pre_tier == Tier.AUTO:
         # Trivially safe — skip council
         evaluated = tier_classifier.classify(action, None, risk_profile)
-        result = simulate_tool_execution(action)
-        evaluated.execution_result = result
+        if evaluated.status == ActionStatus.EXECUTED:
+            result = simulate_tool_execution(action)
+            evaluated.execution_result = result
         audit_log.log_action(evaluated)
         _record_receipt(evaluated)
         return evaluated
@@ -519,7 +520,9 @@ async def approve_action(req: ApprovalRequest):
             result = simulate_tool_execution(action.action)
             action.execution_result = result
             action.status = ActionStatus.EXECUTED
-            tier_classifier.record_tool_use(action.action.tool_name)
+            pattern = extract_action_pattern(action.action)
+            db.record_approval_pattern(action.action.tool_name, pattern)
+            tier_classifier.record_tool_use(action.action.tool_name, action.action)
             return {"status": "approved", "result": result, "action": _serialize_evaluated(action)}
     else:
         action = audit_log.reject_action(req.action_id)
